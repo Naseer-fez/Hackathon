@@ -1,0 +1,49 @@
+{
+  "request_id": "req_1788000269306",
+  "status": "AGENT_ANSWERED",
+  "timestamp": 1788000269.306508,
+  "query": "Use the optical and SAR images together to identify built-up and water-covered regions.",
+  "mode": "optical",
+  "image_metadata": [
+    {
+      "shape": [
+        256,
+        256,
+        3
+      ],
+      "modality": "optical"
+    }
+  ],
+  "response": {
+    "query": "Use the optical and SAR images together to identify built-up and water-covered regions.",
+    "answer": "[IPC AI Agent]: Surface water body detected in the south-eastern sector with strong optical absorption.",
+    "intent": "visual_question_answering",
+    "trace": [
+      {
+        "step": 1,
+        "action": "IPC Agent Bridge Invoked",
+        "detail": "Received request req_1788000269306 for mode: optical"
+      },
+      {
+        "step": 2,
+        "action": "Query Intent Analysis",
+        "detail": "Intent classified as visual_question_answering"
+      },
+      {
+        "step": 3,
+        "action": "Remote Sensing Vision-Language Reasoning",
+        "detail": "Grounded domain taxonomy inference"
+      },
+      {
+        "step": 4,
+        "action": "IPC Agent Response Dispatched",
+        "detail": "Payload serialized and ready for frontend"
+      }
+    ],
+    "entities": [],
+    "metrics": {
+      "confidence": 0.89
+    },
+    "confidence": 0.95
+  }
+}

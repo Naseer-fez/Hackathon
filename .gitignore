@@ -1,0 +1,43 @@
+# Python Virtual Environments & Caches
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+.pytest_cache/
+*.log
+backend/logs/
+
+# Large Model Weights & Binaries (Over GitHub 100MB limit)
+llm/
+*.gguf
+*.bin
+*.safetensors
+*.onnx
+
+# Vector Databases & SQLite Storage
+*.sqlite3
+*.pickle
+vectordb/data/
+vectordb/.venv/
+vectordb/7da7004f-aeb9-4cda-ae15-305300c21bac/
+legacy/vectordb/
+backend/data/uploads/
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+dist/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE & OS Files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

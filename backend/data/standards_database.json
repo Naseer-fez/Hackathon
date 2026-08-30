@@ -1,0 +1,880 @@
+[
+  {
+    "is_code": "IS 456",
+    "title": "Plain and Reinforced Concrete - Code of Practice",
+    "division": "CED",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2000,
+    "reaffirmation_year": 2021,
+    "amendments": [
+      "Amendment 1 (2001)",
+      "Amendment 2 (2005)",
+      "Amendment 3 (2007)",
+      "Amendment 4 (2013)",
+      "Amendment 5 (2019)"
+    ],
+    "scope": "General structural use of plain and reinforced concrete in buildings and civil structures.",
+    "key_parameters": [
+      "Compressive Strength",
+      "Water-Cement Ratio",
+      "Cover to Reinforcement",
+      "Durability Requirements"
+    ],
+    "test_methods": [
+      "IS 516 (Methods of Tests for Strength of Concrete)",
+      "IS 1199 (Sampling and Analysis of Concrete)"
+    ],
+    "normative_references": [
+      "IS 383",
+      "IS 1786",
+      "IS 8112",
+      "IS 12269",
+      "IS 2386"
+    ],
+    "safety_standards": [
+      "IS 14489 (Code of Practice on Occupational Safety and Health Audit)"
+    ],
+    "installation_standards": [
+      "IS 456 (Execution and Quality Assurance Clause 10)"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": false,
+      "scheme": "Voluntary",
+      "order_number": "",
+      "issuing_ministry": "",
+      "effective_date": "",
+      "clause_requirement": "Standard practice compliance required for government tenders."
+    },
+    "category_keywords": [
+      "concrete",
+      "rcc",
+      "civil construction",
+      "structural design",
+      "portland cement concrete",
+      "foundation"
+    ],
+    "gem_categories": [
+      "Construction Materials",
+      "Civil Engineering Services",
+      "Structural Concrete Works"
+    ]
+  },
+  {
+    "is_code": "IS 1786",
+    "title": "High Strength Deformed Steel Bars and Wires for Concrete Reinforcement",
+    "division": "CED",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2008,
+    "reaffirmation_year": 2023,
+    "amendments": [
+      "Amendment 1 (2012)",
+      "Amendment 2 (2017)",
+      "Amendment 3 (2020)"
+    ],
+    "scope": "Specifies requirements for deformed steel bars (TMT rebars Fe 415, Fe 500, Fe 550, Fe 600, Fe 500D) for reinforcement.",
+    "key_parameters": [
+      "0.2% Proof Stress",
+      "Tensile Strength (TS/YS Ratio)",
+      "Elongation %",
+      "Bend and Rebend Test",
+      "Carbon Equivalent (CE)"
+    ],
+    "test_methods": [
+      "IS 1608 (Part 1) (Tensile Testing of Metallic Materials)",
+      "IS 1599 (Metallic Materials - Bend Test)",
+      "IS 228 (Chemical Analysis of Steels)"
+    ],
+    "normative_references": [
+      "IS 228",
+      "IS 1599",
+      "IS 1608",
+      "IS 8910"
+    ],
+    "safety_standards": [
+      "IS 14489 (Safety Audit Code)"
+    ],
+    "installation_standards": [
+      "IS 2502 (Code of Practice for Bending and Fixing of Bars for Concrete Reinforcement)"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "ISI Mark (Scheme I)",
+      "order_number": "S.O. 1225(E) Steel and Steel Products QCO",
+      "issuing_ministry": "Ministry of Steel",
+      "effective_date": "2020-04-01",
+      "clause_requirement": "Mandatory ISI Mark under Scheme I. Bidders must produce valid CML license copy."
+    },
+    "category_keywords": [
+      "tmt bar",
+      "steel rebar",
+      "reinforcement steel",
+      "fe 500d",
+      "fe 550",
+      "deformed steel",
+      "saria",
+      "reinforcing bar"
+    ],
+    "gem_categories": [
+      "Steel Reinforcement",
+      "TMT Rebars",
+      "Civil Construction Steel"
+    ]
+  },
+  {
+    "is_code": "IS 12269",
+    "title": "Ordinary Portland Cement, 53 Grade - Specification",
+    "division": "CED",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2013,
+    "reaffirmation_year": 2020,
+    "amendments": [
+      "Amendment 1 (2016)",
+      "Amendment 2 (2019)"
+    ],
+    "scope": "Specifies chemical and physical requirements for 53 grade Ordinary Portland Cement.",
+    "key_parameters": [
+      "28-Day Compressive Strength >= 53 MPa",
+      "Initial Setting Time >= 30 min",
+      "Fineness (Specific Surface) >= 225 m2/kg",
+      "Soundness (Le-Chatelier) <= 10 mm"
+    ],
+    "test_methods": [
+      "IS 4031 (Methods of Physical Tests for Hydraulic Cement)",
+      "IS 4032 (Method of Chemical Analysis of Hydraulic Cement)"
+    ],
+    "normative_references": [
+      "IS 4031",
+      "IS 4032",
+      "IS 650"
+    ],
+    "safety_standards": [
+      "IS 14489"
+    ],
+    "installation_standards": [
+      "IS 456"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "ISI Mark (Scheme I)",
+      "order_number": "S.O. 2480(E) Cement Quality Control Order",
+      "issuing_ministry": "DPIIT, Ministry of Commerce and Industry",
+      "effective_date": "2003-02-17",
+      "clause_requirement": "Mandatory BIS ISI certification. Manufacturer must hold valid BIS license."
+    },
+    "category_keywords": [
+      "opc 53",
+      "53 grade cement",
+      "cement",
+      "ordinary portland cement",
+      "high strength cement"
+    ],
+    "gem_categories": [
+      "Cement",
+      "Hydraulic Cement",
+      "Building Construction Materials"
+    ]
+  },
+  {
+    "is_code": "IS 4984",
+    "title": "High Density Polyethylene (HDPE) Pipes for Water Supply - Specification",
+    "division": "CED",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2016,
+    "reaffirmation_year": 2021,
+    "amendments": [
+      "Amendment 1 (2018)",
+      "Amendment 2 (2021)"
+    ],
+    "scope": "Specifies requirements for HDPE pipes (PE 63, PE 80, PE 100) for underground water supply networks.",
+    "key_parameters": [
+      "Melt Flow Rate (MFR)",
+      "Hydrostatic Strength at 80 deg C",
+      "Oxidation Induction Time (OIT)",
+      "Carbon Black Content & Dispersion"
+    ],
+    "test_methods": [
+      "IS 12235 (Methods of Test for Unplasticized PVC / Polyethylene Pipes)",
+      "IS 2530 (Methods of Test for Polyethylene)"
+    ],
+    "normative_references": [
+      "IS 2530",
+      "IS 7328",
+      "IS 12235"
+    ],
+    "safety_standards": [
+      "IS 10500 (Drinking Water Quality Specification)"
+    ],
+    "installation_standards": [
+      "IS 7634 (Part 2) (Code of Practice for Laying and Jointing of Polyethylene Pipes)"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "ISI Mark (Scheme I)",
+      "order_number": "S.O. 384(E) HDPE/PVC Pipes QCO",
+      "issuing_ministry": "DPIIT, Ministry of Commerce and Industry",
+      "effective_date": "2023-09-01",
+      "clause_requirement": "Pipes must bear ISI mark with manufacturer CML number."
+    },
+    "category_keywords": [
+      "hdpe pipe",
+      "pe 100 pipe",
+      "water supply pipe",
+      "polyethylene pipe",
+      "potable water piping"
+    ],
+    "gem_categories": [
+      "Pipes and Fittings",
+      "Water Distribution Infrastructure",
+      "Plumbing Supplies"
+    ]
+  },
+  {
+    "is_code": "IS 1786:1985",
+    "title": "High Strength Deformed Steel Bars (Outdated / Superseded)",
+    "division": "CED",
+    "status": "Superseded",
+    "superseded_by": "IS 1786:2008 (Reaffirmed 2023)",
+    "year": 1985,
+    "reaffirmation_year": null,
+    "amendments": [],
+    "scope": "Superseded older edition of TMT steel bar specification.",
+    "key_parameters": [
+      "Obsolete Yield Stress Classes"
+    ],
+    "test_methods": [
+      "IS 1608"
+    ],
+    "normative_references": [
+      "IS 228"
+    ],
+    "safety_standards": [],
+    "installation_standards": [],
+    "mandatory_qco": {
+      "is_mandatory": false,
+      "scheme": "Voluntary",
+      "order_number": "",
+      "issuing_ministry": "",
+      "effective_date": "",
+      "clause_requirement": "OUTDATED: Do not use in new tenders."
+    },
+    "category_keywords": [
+      "is 1786 1985",
+      "old tmt standard"
+    ],
+    "gem_categories": []
+  },
+  {
+    "is_code": "IS 1180 (Part 1)",
+    "title": "Outdoor Type Three-Phase Distribution Transformers Up to and Including 2500 kVA, 33 kV",
+    "division": "ETD",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2014,
+    "reaffirmation_year": 2021,
+    "amendments": [
+      "Amendment 1 (2016)",
+      "Amendment 2 (2018)",
+      "Amendment 3 (2021)",
+      "Amendment 4 (2023)"
+    ],
+    "scope": "Specifies standard ratings, maximum allowable losses (Energy Efficiency Level 1/2/3), and tests for distribution transformers.",
+    "key_parameters": [
+      "No-load Loss & Load Loss at 50% / 100% load",
+      "Temperature Rise Limit (Winding 55 deg C, Oil 50 deg C)",
+      "Insulation Level (LI 170 kV, AC 70 kV for 33kV)",
+      "Short Circuit Withstand Capability"
+    ],
+    "test_methods": [
+      "IS 2026 (Power Transformers - General & Temperature Rise Tests)",
+      "IS 335 (New Insulating Oils - Specification & Breakdown Voltage)",
+      "IS 6600 (Guide for Loading of Oil Immersed Transformers)"
+    ],
+    "normative_references": [
+      "IS 2026",
+      "IS 335",
+      "IS 10028",
+      "IS 3639",
+      "IS 2099"
+    ],
+    "safety_standards": [
+      "IS 1646 (Code of Practice for Fire Safety of Buildings - Electrical Installations)"
+    ],
+    "installation_standards": [
+      "IS 10028 (Part 1, 2, 3) (Code of Practice for Selection, Installation and Maintenance of Transformers)"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "ISI Mark (Scheme I)",
+      "order_number": "S.O. 1130(E) Distribution Transformers QCO",
+      "issuing_ministry": "Ministry of Power / DPIIT",
+      "effective_date": "2014-05-07",
+      "clause_requirement": "Mandatory BIS ISI Mark and BEE Star Rating Label (BEE Gazette S.O. 3338E)."
+    },
+    "category_keywords": [
+      "distribution transformer",
+      "power transformer",
+      "oil immersed transformer",
+      "step down transformer",
+      "11kv transformer",
+      "33kv transformer",
+      "2500 kva"
+    ],
+    "gem_categories": [
+      "Power Distribution",
+      "Electrical Transformers",
+      "Substation Equipment"
+    ]
+  },
+  {
+    "is_code": "IS 694",
+    "title": "PVC Insulated Cables for Working Voltages Up to and Including 1100 V - Specification",
+    "division": "ETD",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2010,
+    "reaffirmation_year": 2022,
+    "amendments": [
+      "Amendment 1 (2014)",
+      "Amendment 2 (2017)",
+      "Amendment 3 (2020)"
+    ],
+    "scope": "Single-core and multi-core PVC insulated and sheathed flexible and non-flexible copper/aluminium wires for electric power and lighting.",
+    "key_parameters": [
+      "Conductor Resistance at 20 deg C",
+      "Insulation Resistance Constant",
+      "Flame Retardant (FR / FRLS) Oxygen Index >= 29%",
+      "High Voltage Spark Test"
+    ],
+    "test_methods": [
+      "IS 10810 (Methods of Test for Cables - Part 0 to 64)",
+      "IS 8130 (Conductors for Insulated Electric Cables)",
+      "IS 5831 (PVC Insulation and Sheath of Electric Cables)"
+    ],
+    "normative_references": [
+      "IS 8130",
+      "IS 5831",
+      "IS 10810",
+      "IS 4905"
+    ],
+    "safety_standards": [
+      "IS 732 (Code of Practice for Electrical Wiring Installations)"
+    ],
+    "installation_standards": [
+      "IS 732 (Electrical Wiring Installation)"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "ISI Mark (Scheme I)",
+      "order_number": "S.O. 4330(E) Electrical Wires and Cables QCO",
+      "issuing_ministry": "DPIIT, Ministry of Commerce and Industry",
+      "effective_date": "2023-06-01",
+      "clause_requirement": "Mandatory ISI Mark. Uncertified cables prohibited from government tenders."
+    },
+    "category_keywords": [
+      "pvc wire",
+      "copper wire",
+      "building wire",
+      "frls cable",
+      "flexible cable",
+      "single core wire",
+      "1100v cable",
+      "electrical cable"
+    ],
+    "gem_categories": [
+      "Wires and Cables",
+      "Electrical Wiring",
+      "Building Electrical Infrastructure"
+    ]
+  },
+  {
+    "is_code": "IS 1293",
+    "title": "Plugs and Socket-Outlets of Related Voltages Up to and Including 250 Volts and Rated Current Up to and Including 16 Amperes - Specification",
+    "division": "ETD",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2019,
+    "reaffirmation_year": 2024,
+    "amendments": [
+      "Amendment 1 (2020)",
+      "Amendment 2 (2022)"
+    ],
+    "scope": "Specifies safety, dimensional, and endurance requirements for domestic and commercial 6A / 16A plugs and socket outlets.",
+    "key_parameters": [
+      "Contact Resistance",
+      "Temperature Rise <= 45 K",
+      "Shutter Interlocking Mechanism",
+      "Insulation Resistance >= 5 MOhm",
+      "Glow Wire Test at 750 deg C"
+    ],
+    "test_methods": [
+      "IS 1293 Clause 13 to Clause 28 (Endurance and Safety Tests)"
+    ],
+    "normative_references": [
+      "IS 302 (Part 1)",
+      "IS 9857"
+    ],
+    "safety_standards": [
+      "IS 302 (Part 1) (Safety of Household Electrical Appliances)"
+    ],
+    "installation_standards": [
+      "IS 732 (Code of Practice for Electrical Wiring Installations)"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "ISI Mark (Scheme I)",
+      "order_number": "S.O. 4381(E) Plugs and Socket Outlets QCO",
+      "issuing_ministry": "DPIIT",
+      "effective_date": "2020-12-01",
+      "clause_requirement": "Mandatory ISI Mark certification under BIS Scheme I."
+    },
+    "category_keywords": [
+      "plug",
+      "socket",
+      "power plug",
+      "switch socket",
+      "6a socket",
+      "16a plug",
+      "wall outlet"
+    ],
+    "gem_categories": [
+      "Electrical Accessories",
+      "Wiring Devices",
+      "Switches and Sockets"
+    ]
+  },
+  {
+    "is_code": "IS 1293:2005",
+    "title": "Plugs and Socket-Outlets (Outdated / Superseded 2005 Edition)",
+    "division": "ETD",
+    "status": "Superseded",
+    "superseded_by": "IS 1293:2019",
+    "year": 2005,
+    "reaffirmation_year": null,
+    "amendments": [],
+    "scope": "Outdated 2005 edition of Plugs and Sockets standard without revised safety shutters.",
+    "key_parameters": [
+      "Obsolete pin dimensions and non-shuttered requirements"
+    ],
+    "test_methods": [
+      "IS 1293:2005"
+    ],
+    "normative_references": [],
+    "safety_standards": [],
+    "installation_standards": [],
+    "mandatory_qco": {
+      "is_mandatory": false,
+      "scheme": "Voluntary",
+      "order_number": "",
+      "issuing_ministry": "",
+      "effective_date": "",
+      "clause_requirement": "SUPERSEDED: Must be updated to IS 1293:2019 in all active tenders."
+    },
+    "category_keywords": [
+      "is 1293 2005",
+      "old socket standard"
+    ],
+    "gem_categories": []
+  },
+  {
+    "is_code": "IS 14286",
+    "title": "Crystalline Silicon Terrestrial Photovoltaic (PV) Modules - Design Qualification and Type Approval",
+    "division": "LITD",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2010,
+    "reaffirmation_year": 2021,
+    "amendments": [
+      "Amendment 1 (2018)",
+      "Amendment 2 (2021)"
+    ],
+    "scope": "Design qualification and type approval of terrestrial PV modules for long-term outdoor operation.",
+    "key_parameters": [
+      "Maximum Power (Pmax) Determination",
+      "Temperature Coefficients",
+      "Hail Impact Test",
+      "Damp Heat (1000h at 85C/85%RH)",
+      "PID Resistance"
+    ],
+    "test_methods": [
+      "IS/IEC 61215-2 (Terrestrial PV Modules - Test Procedures)",
+      "IS/IEC 60904 (Photovoltaic Devices - Measurement of PV Current-Voltage)"
+    ],
+    "normative_references": [
+      "IS/IEC 61730-1",
+      "IS/IEC 61730-2",
+      "IS/IEC 60904"
+    ],
+    "safety_standards": [
+      "IS/IEC 61730-1 (PV Module Safety Qualification - Construction)",
+      "IS/IEC 61730-2 (PV Module Safety - Testing)"
+    ],
+    "installation_standards": [
+      "IS/IEC 62548 (Photovoltaic (PV) Arrays - Design Requirements)"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "Compulsory Registration Scheme (CRS)",
+      "order_number": "S.O. 2920(E) Solar Photovoltaics Systems/Devices QCO",
+      "issuing_ministry": "Ministry of New and Renewable Energy (MNRE)",
+      "effective_date": "2018-04-16",
+      "clause_requirement": "Mandatory BIS Registration (CRS Scheme II / ALMM Listing by MNRE)."
+    },
+    "category_keywords": [
+      "solar panel",
+      "pv module",
+      "solar pv",
+      "monocrystalline module",
+      "polycrystalline solar",
+      "rooftop solar",
+      "photovoltaic"
+    ],
+    "gem_categories": [
+      "Solar Power Equipment",
+      "Photovoltaic Modules",
+      "Renewable Energy Systems"
+    ]
+  },
+  {
+    "is_code": "IS 16221 (Part 2)",
+    "title": "Safety of Power Converters for Use in Photovoltaic Power Systems - Particular Requirements for Inverters",
+    "division": "LITD",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2015,
+    "reaffirmation_year": 2022,
+    "amendments": [
+      "Amendment 1 (2019)"
+    ],
+    "scope": "Specifies electrical and fire safety requirements for grid-connected and off-grid solar inverters.",
+    "key_parameters": [
+      "Inverter Efficiency >= 98%",
+      "Total Harmonic Distortion (THD) < 3%",
+      "Anti-Islanding Protection Trip Time <= 2s",
+      "IP65 Enclosure Rating"
+    ],
+    "test_methods": [
+      "IS 16169 (Test Procedure of Islanding Prevention Measures)",
+      "IS/IEC 60068 (Environmental Testing)"
+    ],
+    "normative_references": [
+      "IS 16169",
+      "IS/IEC 60529",
+      "IS 16221 (Part 1)"
+    ],
+    "safety_standards": [
+      "IS 16221 (Part 1) (General Safety Requirements for Power Converters)"
+    ],
+    "installation_standards": [
+      "IS 732",
+      "IS 3043 (Code of Practice for Earthing)"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "Compulsory Registration Scheme (CRS)",
+      "order_number": "S.O. 2920(E) Solar Inverters QCO",
+      "issuing_ministry": "MNRE",
+      "effective_date": "2018-09-05",
+      "clause_requirement": "Mandatory BIS CRS registration and MNRE guidelines compliance."
+    },
+    "category_keywords": [
+      "solar inverter",
+      "grid tie inverter",
+      "string inverter",
+      "solar pcu",
+      "power converter",
+      "on grid inverter"
+    ],
+    "gem_categories": [
+      "Solar Inverters",
+      "Power Conditioning Units",
+      "Renewable Energy Electronics"
+    ]
+  },
+  {
+    "is_code": "IS 13252 (Part 1)",
+    "title": "Information Technology Equipment - Safety - Part 1: General Requirements",
+    "division": "LITD",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2010,
+    "reaffirmation_year": 2020,
+    "amendments": [
+      "Amendment 1 (2013)",
+      "Amendment 2 (2015)",
+      "Amendment 3 (2017)",
+      "Amendment 4 (2020)"
+    ],
+    "scope": "Safety of mains-powered or battery-powered information technology equipment including laptops, desktops, servers, monitors, printers.",
+    "key_parameters": [
+      "Electric Shock Protection",
+      "Dielectric Strength Voltage Withstand",
+      "Temperature Rise Under Fault",
+      "Flammability of Enclosure V-0/V-1"
+    ],
+    "test_methods": [
+      "IS 13252 (Part 1) Clause 5 (Electrical Tests)"
+    ],
+    "normative_references": [
+      "IS 616",
+      "IS 16046 (Part 2)"
+    ],
+    "safety_standards": [
+      "IS 13252 (Part 1)"
+    ],
+    "installation_standards": [
+      "IS 732"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "Compulsory Registration Scheme (CRS)",
+      "order_number": "S.O. 2357(E) Electronics and IT Goods (Requirement for Compulsory Registration) Order",
+      "issuing_ministry": "Ministry of Electronics and Information Technology (MeitY)",
+      "effective_date": "2013-07-03",
+      "clause_requirement": "Mandatory BIS CRS Registration Number (R-XXXXXXXX) prominently marked on product and packaging."
+    },
+    "category_keywords": [
+      "laptop",
+      "desktop computer",
+      "server",
+      "computer monitor",
+      "printer",
+      "tablet pc",
+      "it equipment",
+      "workstation"
+    ],
+    "gem_categories": [
+      "Computer Hardware",
+      "Laptops and Notebooks",
+      "Enterprise Servers",
+      "Office IT Equipment"
+    ]
+  },
+  {
+    "is_code": "IS 10322 (Part 5/Sec 3)",
+    "title": "Luminaires - Particular Requirements - Luminaires for Road and Street Lighting",
+    "division": "LITD",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2012,
+    "reaffirmation_year": 2022,
+    "amendments": [
+      "Amendment 1 (2016)",
+      "Amendment 2 (2021)"
+    ],
+    "scope": "Safety and constructional requirements for LED street light luminaires, highway lighting, and public space poles.",
+    "key_parameters": [
+      "Luminous Efficacy >= 120 lm/W",
+      "CCT (3000K - 6500K)",
+      "Ingress Protection IP66",
+      "Surge Protection >= 10 kV",
+      "Power Factor >= 0.95"
+    ],
+    "test_methods": [
+      "IS 16103 (Part 1 & 2) (LED Modules for General Lighting)",
+      "IS 16107 (Part 2/Sec 1) (Photometric Testing)"
+    ],
+    "normative_references": [
+      "IS 15885 (Part 2/Sec 13)",
+      "IS 16103",
+      "IS 16107"
+    ],
+    "safety_standards": [
+      "IS 15885 (Part 2/Sec 13) (Safety of Lamp Controlgear - LED Drivers)"
+    ],
+    "installation_standards": [
+      "IS 1944 (Code of Practice for Lighting of Public Thoroughfares)"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "Compulsory Registration Scheme (CRS)",
+      "order_number": "S.O. 2357(E) Lighting Products CRS Order",
+      "issuing_ministry": "MeitY / DPIIT",
+      "effective_date": "2015-09-01",
+      "clause_requirement": "Mandatory BIS CRS Registration for LED Luminaire and Driver."
+    },
+    "category_keywords": [
+      "led street light",
+      "street light luminaire",
+      "road lighting",
+      "outdoor led",
+      "led floodlight",
+      "pole light"
+    ],
+    "gem_categories": [
+      "Street Lighting",
+      "LED Luminaires",
+      "Municipal Lighting Infrastructure"
+    ]
+  },
+  {
+    "is_code": "IS 15683",
+    "title": "Portable Fire Extinguishers - Performance and Construction - Specification",
+    "division": "MED",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2018,
+    "reaffirmation_year": 2023,
+    "amendments": [
+      "Amendment 1 (2020)",
+      "Amendment 2 (2022)"
+    ],
+    "scope": "Specifies construction, minimum fire rating (Class A, B, C, D, F), burst pressure, and safety discharge of portable fire extinguishers.",
+    "key_parameters": [
+      "Working Pressure & Proof Test Pressure",
+      "Minimum Effective Discharge Time",
+      "Operating Temperature Range (-30C to +60C)",
+      "Fire Rating Classification (e.g. 4A, 34B)"
+    ],
+    "test_methods": [
+      "IS 15683 Annexure A to G (Fire Test Protocols)",
+      "IS 4308 (Specification for Dry Chemical Powder for Fire Fighting)"
+    ],
+    "normative_references": [
+      "IS 4308",
+      "IS 4862",
+      "IS 11108",
+      "IS 2190"
+    ],
+    "safety_standards": [
+      "IS 2190 (Selection, Installation and Maintenance of Portable First-Aid Fire Extinguishers - Code of Practice)"
+    ],
+    "installation_standards": [
+      "IS 2190 (Code of Practice for Fire Extinguisher Installation)"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "ISI Mark (Scheme I)",
+      "order_number": "S.O. 4589(E) Fire Safety Products QCO",
+      "issuing_ministry": "DPIIT, Ministry of Commerce and Industry",
+      "effective_date": "2023-01-01",
+      "clause_requirement": "Mandatory ISI Mark certification under BIS Scheme I."
+    },
+    "category_keywords": [
+      "fire extinguisher",
+      "co2 extinguisher",
+      "abc dry powder extinguisher",
+      "portable fire fighting",
+      "fire safety equipment",
+      "foam extinguisher"
+    ],
+    "gem_categories": [
+      "Fire Fighting Equipment",
+      "Portable Fire Extinguishers",
+      "Emergency and Safety Supplies"
+    ]
+  },
+  {
+    "is_code": "IS 9473",
+    "title": "Respiratory Protective Devices - Filtering Half Masks to Protect Against Particles - Specification",
+    "division": "TXD",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 2002,
+    "reaffirmation_year": 2022,
+    "amendments": [
+      "Amendment 1 (2020)"
+    ],
+    "scope": "Specifies minimum requirements for particle filtering half masks (FFP1, FFP2 / N95 equivalent, FFP3) used as respiratory protective devices.",
+    "key_parameters": [
+      "Bacterial Filtration Efficiency (BFE) >= 95%",
+      "Particle Filtration Efficiency (PFE) >= 95% at 95 L/min",
+      "Breathing Resistance (Inhalation <= 2.4 mbar, Exhalation <= 3.0 mbar)",
+      "Total Inward Leakage <= 8%"
+    ],
+    "test_methods": [
+      "IS 9473 Clause 8 (Sodium Chloride & Paraffin Oil Aerosol Test)",
+      "IS 9473 Clause 9 (Breathing Resistance Test)"
+    ],
+    "normative_references": [
+      "IS 9473",
+      "IS 14489"
+    ],
+    "safety_standards": [
+      "IS 9623 (Code of Practice for Selection, Use and Maintenance of Respiratory Protective Devices)"
+    ],
+    "installation_standards": [
+      "IS 9623"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "ISI Mark (Scheme I)",
+      "order_number": "S.O. 544(E) Personal Protective Equipment (Masks) QCO",
+      "issuing_ministry": "Ministry of Textiles / DPIIT",
+      "effective_date": "2021-03-15",
+      "clause_requirement": "Mandatory BIS ISI Mark certification on every packaging box and mask."
+    },
+    "category_keywords": [
+      "n95 mask",
+      "particulate respirator",
+      "filtering half mask",
+      "ffp2 mask",
+      "surgical mask",
+      "ppe mask",
+      "respiratory protection"
+    ],
+    "gem_categories": [
+      "Personal Protective Equipment",
+      "Medical Masks and Respirators",
+      "Safety Gear"
+    ]
+  },
+  {
+    "is_code": "IS 2925",
+    "title": "Specification for Industrial Safety Helmets",
+    "division": "MED",
+    "status": "Active",
+    "superseded_by": null,
+    "year": 1984,
+    "reaffirmation_year": 2021,
+    "amendments": [
+      "Amendment 1 (1990)",
+      "Amendment 2 (2000)",
+      "Amendment 3 (2018)"
+    ],
+    "scope": "Specifies physical, shock absorption, penetration resistance, flammability, and electrical resistance for industrial safety helmets.",
+    "key_parameters": [
+      "Shock Absorption (Transmitted Force <= 5.0 kN)",
+      "Penetration Resistance (No contact with headform)",
+      "Flammability Test",
+      "Electrical Resistance (Withstand 2.2 kV)"
+    ],
+    "test_methods": [
+      "IS 2925 Appendix A to G (Mechanical & Electrical Test Methods)"
+    ],
+    "normative_references": [
+      "IS 2925",
+      "IS 14489"
+    ],
+    "safety_standards": [
+      "IS 14489 (Occupational Safety Audit)"
+    ],
+    "installation_standards": [
+      "IS 13415 (Code of Practice for Selection and Care of Industrial Safety Helmets)"
+    ],
+    "mandatory_qco": {
+      "is_mandatory": true,
+      "scheme": "ISI Mark (Scheme I)",
+      "order_number": "S.O. 3120(E) Safety Helmets QCO",
+      "issuing_ministry": "DPIIT",
+      "effective_date": "2021-12-01",
+      "clause_requirement": "Mandatory ISI Mark certification. Helmets without valid CML license rejected."
+    },
+    "category_keywords": [
+      "safety helmet",
+      "industrial helmet",
+      "hard hat",
+      "construction helmet",
+      "head protection",
+      "safety hardhat"
+    ],
+    "gem_categories": [
+      "Personal Protective Equipment",
+      "Head Protection",
+      "Industrial Safety Equipment"
+    ]
+  }
+]

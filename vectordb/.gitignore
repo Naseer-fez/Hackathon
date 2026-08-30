@@ -1,0 +1,25 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Data and Vector Store
+data/chroma/
+*.sqlite3
+
+# Distribution / Packaging
+build/
+dist/
+*.egg-info/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

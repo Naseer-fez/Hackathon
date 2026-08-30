@@ -1,0 +1,39 @@
+server:
+  host: "127.0.0.1"
+  port: 8000
+  log_level: "INFO"
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+    - "http://127.0.0.1:5173"
+    - "*"
+
+storage:
+  data_dir: "d:/CODE/Hackathon/backend/data"
+  standards_file: "d:/CODE/Hackathon/backend/data/standards_database.json"
+  qco_file: "d:/CODE/Hackathon/backend/data/qco_registry.json"
+  upload_dir: "d:/CODE/Hackathon/backend/data/uploads"
+
+ai_engine:
+  embedding_model_name: "d:/CODE/Hackathon/llm/all-MiniLM-L6-v2"
+  multilingual_model_name: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+  similarity_threshold: 0.35
+  top_k_recommendations: 5
+  hybrid_alpha: 0.65
+  enable_gpu: false
+
+llm:
+  provider: "local_gguf"
+  model_name: "Qwen2.5-7B-Instruct"
+  model_path: "d:/CODE/Hackathon/llm/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
+  n_ctx: 4096
+  n_threads: 4
+  api_key_env_var: "GEMINI_API_KEY"
+  temperature: 0.2
+  max_tokens: 1024
+
+bis_scraper:
+  base_url: "https://www.services.bis.gov.in/php/BIS_2.0/bisconnect/knowyourstandards/indian_standards/isdetails"
+  qco_portal_url: "https://www.bis.gov.in/product-certification/products-under-compulsory-certification/"
+  request_timeout_sec: 15
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"

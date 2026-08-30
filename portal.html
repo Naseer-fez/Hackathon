@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BIS-SpecAI Backend Test Portal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #0f172a; color: #e2e8f0; padding: 20px; }
+    h1, h2, h3 { color: #f8fafc; margin-bottom: 8px; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 12px; margin-bottom: 20px; }
+    .status-badge { padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: bold; background: #334155; color: #94a3b8; }
+    .status-badge.online { background: #065f46; color: #34d399; }
+    .status-badge.offline { background: #7f1d1d; color: #f87171; }
+    .container { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+    .panel { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; }
+    .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 12px; }
+    
+    /* Chatbot Styles */
+    .chat-box { flex: 1; min-height: 380px; max-height: 480px; overflow-y: auto; background: #0b1329; border: 1px solid #334155; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { max-width: 85%; padding: 8px 12px; border-radius: 6px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+    .msg.user { align-self: flex-end; background: #2563eb; color: #fff; }
+    .msg.assistant { align-self: flex-start; background: #334155; color: #f1f5f9; border-left: 3px solid #38bdf8; }
+    .msg.system { align-self: center; background: #1e293b; color: #94a3b8; font-size: 11px; font-style: italic; }
+    .chat-input-row { display: flex; gap: 8px; margin-top: 10px; }
+    input, textarea, select { background: #0f172a; border: 1px solid #475569; color: #f8fafc; padding: 8px 12px; border-radius: 4px; font-size: 13px; outline: none; width: 100%; }
+    input:focus, textarea:focus { border-color: #38bdf8; }
+    button { background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.15s; }
+    button:hover { background: #1d4ed8; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    /* Recommendations & Inspection Styles */
+    .field-group { margin-bottom: 12px; }
+    .field-group label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+    .output-box { background: #0b1329; border: 1px solid #334155; border-radius: 6px; padding: 10px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; color: #38bdf8; }
+    .log-panel { margin-top: 20px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 14px; }
+    .log-list { font-family: monospace; font-size: 11px; max-height: 120px; overflow-y: auto; color: #cbd5e1; display: flex; flex-direction: column; gap: 4px; }
+    .log-item { border-bottom: 1px solid #334155; padding-bottom: 2px; }
+    .log-time { color: #64748b; }
+    .log-success { color: #34d399; }
+    .log-error { color: #f87171; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>BIS-SpecAI Backend Test Portal</h1>
+      <p style="font-size: 12px; color: #94a3b8;">Direct API testing interface for LLM inference, embeddings, and QCO verification</p>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <input id="apiBase" value="http://127.0.0.1:8000" style="width: 180px; padding: 4px 8px; font-size: 12px;" title="Backend API Base URL">
+      <span id="healthBadge" class="status-badge">Checking...</span>
+      <button onclick="checkHealth()" style="padding: 4px 10px; font-size: 12px;">Ping</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Chatbot Section -->
+    <div class="panel">
+      <div class="section-title">AI Procurement Chatbot (/api/v1/ask-assistant)</div>
+      <div id="chatBox" class="chat-box">
+        <div class="msg system">Connected to local test suite. Ask any Indian Standards / BIS compliance question.</div>
+      </div>
+      <div class="chat-input-row">
+        <input id="chatInput" placeholder="e.g. What is the mandatory standard for solar PV modules?" onkeydown="if(event.key==='Enter') sendChat()">
+        <button id="chatBtn" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+
+    <!-- Recommendations and Explain Section -->
+    <div class="panel">
+      <div class="section-title">Standard Search & Explain Tests</div>
+      
+      <!-- Recommendation Query -->
+      <div class="field-group">
+        <label>1. Test Semantic Search (/api/v1/recommend)</label>
+        <div style="display: flex; gap: 6px;">
+          <input id="recQuery" value="Solar PV module for rooftop installation">
+          <button onclick="testRecommend()">Search</button>
+        </div>
+      </div>
+
+      <!-- Explain Standard -->
+      <div class="field-group">
+        <label>2. Test LLM Explanation (/api/v1/explain-standard)</label>
+        <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+          <input id="explainCode" value="IS 14286" style="width: 120px;" placeholder="IS Code">
+          <input id="explainQuery" value="Solar PV module for rooftop installation" placeholder="Query Context">
+          <button onclick="testExplain()">Explain</button>
+        </div>
+      </div>
+
+      <!-- Response Output -->
+      <div class="field-group" style="flex: 1; display: flex; flex-direction: column;">
+        <label>Raw API Response / Output Inspection</label>
+        <div id="apiOutput" class="output-box" style="flex: 1;">Ready for API testing...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Network/Audit Log -->
+  <div class="log-panel">
+    <div class="section-title" style="display: flex; justify-content: space-between;">
+      <span>Audit & Latency Log</span>
+      <span style="font-size: 11px; cursor: pointer; color: #38bdf8;" onclick="document.getElementById('logList').innerHTML=''">Clear</span>
+    </div>
+    <div id="logList" class="log-list"></div>
+  </div>
+
+  <script>
+    function getApiUrl(endpoint) {
+      const base = document.getElementById('apiBase').value.replace(/\/$/, '');
+      return `${base}${endpoint}`;
+    }
+
+    function addLog(endpoint, status, ms, error = null) {
+      const logList = document.getElementById('logList');
+      const item = document.createElement('div');
+      item.className = 'log-item';
+      const time = new Date().toLocaleTimeString();
+      const statusClass = status >= 200 && status < 300 ? 'log-success' : 'log-error';
+      item.innerHTML = `<span class="log-time">[${time}]</span> <strong>${endpoint}</strong> <span class="${statusClass}">${status}</span> (${ms.toFixed(0)}ms) ${error ? '- ' + error : ''}`;
+      logList.prepend(item);
+    }
+
+    async function checkHealth() {
+      const badge = document.getElementById('healthBadge');
+      badge.className = 'status-badge';
+      badge.textContent = 'Checking...';
+      const start = performance.now();
+      try {
+        const res = await fetch(getApiUrl('/api/v1/health'));
+        const ms = performance.now() - start;
+        if (res.ok) {
+          badge.className = 'status-badge online';
+          badge.textContent = 'Online (200 OK)';
+          addLog('/api/v1/health', 200, ms);
+        } else {
+          badge.className = 'status-badge offline';
+          badge.textContent = `HTTP ${res.status}`;
+          addLog('/api/v1/health', res.status, ms);
+        }
+      } catch (err) {
+        badge.className = 'status-badge offline';
+        badge.textContent = 'Server Offline';
+        addLog('/api/v1/health', 0, performance.now() - start, err.message);
+      }
+    }
+
+    async function sendChat() {
+      const input = document.getElementById('chatInput');
+      const btn = document.getElementById('chatBtn');
+      const chatBox = document.getElementById('chatBox');
+      const question = input.value.trim();
+      if (!question) return;
+
+      // Append User message
+      const userMsg = document.createElement('div');
+      userMsg.className = 'msg user';
+      userMsg.textContent = question;
+      chatBox.appendChild(userMsg);
+      input.value = '';
+      btn.disabled = true;
+
+      // Append temporary loading message
+      const botMsg = document.createElement('div');
+      botMsg.className = 'msg assistant';
+      botMsg.textContent = 'Generating response via local GGUF model...';
+      chatBox.appendChild(botMsg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      const start = performance.now();
+      try {
+        const res = await fetch(getApiUrl('/api/v1/ask-assistant'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+        const ms = performance.now() - start;
+        const data = await res.json();
+        addLog('/api/v1/ask-assistant', res.status, ms);
+
+        if (res.ok) {
+          botMsg.textContent = data.answer || '(Empty answer returned)';
+        } else {
+          botMsg.textContent = `Error [${res.status}]: ${data.detail || JSON.stringify(data)}`;
+        }
+      } catch (err) {
+        addLog('/api/v1/ask-assistant', 0, performance.now() - start, err.message);
+        botMsg.textContent = `Request failed: ${err.message}. Ensure backend is running on 127.0.0.1:8000.`;
+      } finally {
+        btn.disabled = false;
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    }
+
+    async function testRecommend() {
+      const query = document.getElementById('recQuery').value.trim();
+      const output = document.getElementById('apiOutput');
+      output.textContent = 'Running recommendation search...';
+      const start = performance.now();
+      try {
+        const res = await fetch(getApiUrl('/api/v1/recommend'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, top_k: 5 })
+        });
+        const ms = performance.now() - start;
+        const data = await res.json();
+        addLog('/api/v1/recommend', res.status, ms);
+        output.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        addLog('/api/v1/recommend', 0, performance.now() - start, err.message);
+        output.textContent = `Error: ${err.message}`;
+      }
+    }
+
+    async function testExplain() {
+      const is_code = document.getElementById('explainCode').value.trim();
+      const query = document.getElementById('explainQuery').value.trim();
+      const output = document.getElementById('apiOutput');
+      output.textContent = 'Generating explanation from LLM...';
+      const start = performance.now();
+      try {
+        const res = await fetch(getApiUrl('/api/v1/explain-standard'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_code, query })
+        });
+        const ms = performance.now() - start;
+        const data = await res.json();
+        addLog('/api/v1/explain-standard', res.status, ms);
+        output.textContent = data.explanation || JSON.stringify(data, null, 2);
+      } catch (err) {
+        addLog('/api/v1/explain-standard', 0, performance.now() - start, err.message);
+        output.textContent = `Error: ${err.message}`;
+      }
+    }
+
+    // Auto check on load
+    window.addEventListener('DOMContentLoaded', checkHealth);
+  </script>
+</body>
+</html>

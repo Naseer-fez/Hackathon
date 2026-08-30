@@ -1,0 +1,106 @@
+{
+  "IS 1786": {
+    "is_mandatory": true,
+    "scheme": "ISI Mark (Scheme I)",
+    "order_number": "S.O. 1225(E) Steel and Steel Products QCO",
+    "issuing_ministry": "Ministry of Steel",
+    "effective_date": "2020-04-01",
+    "clause_requirement": "Mandatory ISI Mark under Scheme I. Bidders must produce valid CML license copy."
+  },
+  "IS 12269": {
+    "is_mandatory": true,
+    "scheme": "ISI Mark (Scheme I)",
+    "order_number": "S.O. 2480(E) Cement Quality Control Order",
+    "issuing_ministry": "DPIIT, Ministry of Commerce and Industry",
+    "effective_date": "2003-02-17",
+    "clause_requirement": "Mandatory BIS ISI certification. Manufacturer must hold valid BIS license."
+  },
+  "IS 4984": {
+    "is_mandatory": true,
+    "scheme": "ISI Mark (Scheme I)",
+    "order_number": "S.O. 384(E) HDPE/PVC Pipes QCO",
+    "issuing_ministry": "DPIIT, Ministry of Commerce and Industry",
+    "effective_date": "2023-09-01",
+    "clause_requirement": "Pipes must bear ISI mark with manufacturer CML number."
+  },
+  "IS 1180 (Part 1)": {
+    "is_mandatory": true,
+    "scheme": "ISI Mark (Scheme I)",
+    "order_number": "S.O. 1130(E) Distribution Transformers QCO",
+    "issuing_ministry": "Ministry of Power / DPIIT",
+    "effective_date": "2014-05-07",
+    "clause_requirement": "Mandatory BIS ISI Mark and BEE Star Rating Label (BEE Gazette S.O. 3338E)."
+  },
+  "IS 694": {
+    "is_mandatory": true,
+    "scheme": "ISI Mark (Scheme I)",
+    "order_number": "S.O. 4330(E) Electrical Wires and Cables QCO",
+    "issuing_ministry": "DPIIT, Ministry of Commerce and Industry",
+    "effective_date": "2023-06-01",
+    "clause_requirement": "Mandatory ISI Mark. Uncertified cables prohibited from government tenders."
+  },
+  "IS 1293": {
+    "is_mandatory": true,
+    "scheme": "ISI Mark (Scheme I)",
+    "order_number": "S.O. 4381(E) Plugs and Socket Outlets QCO",
+    "issuing_ministry": "DPIIT",
+    "effective_date": "2020-12-01",
+    "clause_requirement": "Mandatory ISI Mark certification under BIS Scheme I."
+  },
+  "IS 14286": {
+    "is_mandatory": true,
+    "scheme": "Compulsory Registration Scheme (CRS)",
+    "order_number": "S.O. 2920(E) Solar Photovoltaics Systems/Devices QCO",
+    "issuing_ministry": "Ministry of New and Renewable Energy (MNRE)",
+    "effective_date": "2018-04-16",
+    "clause_requirement": "Mandatory BIS Registration (CRS Scheme II / ALMM Listing by MNRE)."
+  },
+  "IS 16221 (Part 2)": {
+    "is_mandatory": true,
+    "scheme": "Compulsory Registration Scheme (CRS)",
+    "order_number": "S.O. 2920(E) Solar Inverters QCO",
+    "issuing_ministry": "MNRE",
+    "effective_date": "2018-09-05",
+    "clause_requirement": "Mandatory BIS CRS registration and MNRE guidelines compliance."
+  },
+  "IS 13252 (Part 1)": {
+    "is_mandatory": true,
+    "scheme": "Compulsory Registration Scheme (CRS)",
+    "order_number": "S.O. 2357(E) Electronics and IT Goods (Requirement for Compulsory Registration) Order",
+    "issuing_ministry": "Ministry of Electronics and Information Technology (MeitY)",
+    "effective_date": "2013-07-03",
+    "clause_requirement": "Mandatory BIS CRS Registration Number (R-XXXXXXXX) prominently marked on product and packaging."
+  },
+  "IS 10322 (Part 5/Sec 3)": {
+    "is_mandatory": true,
+    "scheme": "Compulsory Registration Scheme (CRS)",
+    "order_number": "S.O. 2357(E) Lighting Products CRS Order",
+    "issuing_ministry": "MeitY / DPIIT",
+    "effective_date": "2015-09-01",
+    "clause_requirement": "Mandatory BIS CRS Registration for LED Luminaire and Driver."
+  },
+  "IS 15683": {
+    "is_mandatory": true,
+    "scheme": "ISI Mark (Scheme I)",
+    "order_number": "S.O. 4589(E) Fire Safety Products QCO",
+    "issuing_ministry": "DPIIT, Ministry of Commerce and Industry",
+    "effective_date": "2023-01-01",
+    "clause_requirement": "Mandatory ISI Mark certification under BIS Scheme I."
+  },
+  "IS 9473": {
+    "is_mandatory": true,
+    "scheme": "ISI Mark (Scheme I)",
+    "order_number": "S.O. 544(E) Personal Protective Equipment (Masks) QCO",
+    "issuing_ministry": "Ministry of Textiles / DPIIT",
+    "effective_date": "2021-03-15",
+    "clause_requirement": "Mandatory BIS ISI Mark certification on every packaging box and mask."
+  },
+  "IS 2925": {
+    "is_mandatory": true,
+    "scheme": "ISI Mark (Scheme I)",
+    "order_number": "S.O. 3120(E) Safety Helmets QCO",
+    "issuing_ministry": "DPIIT",
+    "effective_date": "2021-12-01",
+    "clause_requirement": "Mandatory ISI Mark certification. Helmets without valid CML license rejected."
+  }
+}

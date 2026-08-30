@@ -1,0 +1,7 @@
+pandas
+chromadb
+sentence-transformers
+torch
+tqdm
+numpy
+langchain-text-splitters
