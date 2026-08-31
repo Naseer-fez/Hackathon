@@ -5,7 +5,7 @@ import { ChatMessage, ChatMessageItem } from "./ChatMessageItem";
 import { clsx } from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
 
-export const AssistantChatDrawer: React.FC = () => {
+export const AssistantChatDrawer: React.FC<{ pdfText?: string }> = ({ pdfText }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", text: "Hello! I am your BIS AI. Ask me about Indian Standards." },
@@ -17,6 +17,10 @@ export const AssistantChatDrawer: React.FC = () => {
   const handleSend = async () => {
     if (!input.trim() || loading) return;
     const q = input; setInput(""); setLoading(true); setSpeaking(true);
+    
+    // Capture current messages as history before appending new optimistic ones
+    const chatHistory = messages.map(m => ({ role: m.role, content: m.text }));
+    
     setMessages(p => [...p, { role: "user", text: q }, { role: "assistant", text: "" }]);
     
     try {
@@ -30,7 +34,7 @@ export const AssistantChatDrawer: React.FC = () => {
             { ...lastMsg, text: lastMsg.text + chunk }
           ];
         });
-      });
+      }, pdfText, chatHistory);
     } catch {
       setMessages(prev => {
         if (prev.length === 0) return prev;

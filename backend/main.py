@@ -1,11 +1,11 @@
 """FastAPI application entry point for Indian Standards AI Recommendation Engine."""
 from __future__ import annotations
-
 from contextlib import asynccontextmanager
 import time
 from typing import Any, AsyncGenerator
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 import uvicorn
 from backend.api.gem_webhook_router import router as gem_router
 from backend.api.llm_router import router as llm_router
@@ -80,15 +80,15 @@ async def health_check() -> dict[str, str]:
     return {"status": "healthy", "service": "Indian Standards AI Engine", "version": "1.0.0"}
 
 
+@app.get("/metrics")
+async def metrics_endpoint() -> Response:
+    """Prometheus metrics endpoint."""
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
 def start_server() -> None:
     """Run uvicorn server with configured parameters."""
-    uvicorn.run(
-        "backend.main:app",
-        host=app_settings.server.host,
-        port=app_settings.server.port,
-        log_level=app_settings.server.log_level.lower(),
-        reload=False,
-    )
+    uvicorn.run("backend.main:app", host=app_settings.server.host, port=app_settings.server.port, log_level=app_settings.server.log_level.lower(), reload=False)
 
 
 if __name__ == "__main__":

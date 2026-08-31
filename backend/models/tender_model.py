@@ -33,3 +33,4 @@ class TenderAnalysisReport(BaseModel):
     compliance_issues: list[ComplianceIssue] = Field(default_factory=list)
     mandatory_qco_coverage: float = 100.0
     complete_spec_clause_text: str = ""
+    raw_text: str = ""

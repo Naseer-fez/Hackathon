@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Any
+import torch
 
 from backend.config.settings import app_settings
 from backend.logger.app_logger import get_logger
@@ -16,23 +17,30 @@ _CandidateTuple = tuple[IndianStandard, float, list[str]]
 class RerankerService:
     """Cross-encoder reranker that rescores first-stage retrieval candidates on CUDA."""
 
+    _cross_encoder: Any = None
+    _load_failed: bool = False
+
     def __init__(self) -> None:
-        self._cross_encoder: Any = None
         self._model_name: str = app_settings.ai_engine.reranker_model
+        self._cross_encoder: Any = None
         self._load_failed: bool = False
 
     def _load_model(self) -> None:
-        """Lazy-load the cross-encoder model onto CUDA (cuda:0)."""
-        if self._load_failed:
+        """Lazy-load the cross-encoder model onto CUDA if available, else CPU."""
+        if self._load_failed or RerankerService._load_failed:
             return
         try:
             from sentence_transformers import CrossEncoder
 
-            logger.info(f"Loading cross-encoder model '{self._model_name}' on cuda:0...")
-            self._cross_encoder = CrossEncoder(self._model_name, device="cuda:0")
-            logger.info(f"Cross-encoder model '{self._model_name}' loaded successfully on CUDA.")
-        except (ImportError, RuntimeError, OSError, ValueError) as exc:
+            device = "cuda:0" if (app_settings.ai_engine.enable_gpu and torch.cuda.is_available()) else "cpu"
+            logger.info(f"Loading cross-encoder model '{self._model_name}' on {device}...")
+            model = CrossEncoder(self._model_name, device=device)
+            self._cross_encoder = model
+            RerankerService._cross_encoder = model
+            logger.info(f"Cross-encoder model '{self._model_name}' loaded successfully on {device}.")
+        except (ImportError, RuntimeError, OSError, ValueError, AssertionError) as exc:
             self._load_failed = True
+            RerankerService._load_failed = True
             logger.warning(
                 f"Cross-encoder model failed to load ({type(exc).__name__}: {exc}). "
                 "Falling back to hybrid-only ranking."
@@ -44,18 +52,16 @@ class RerankerService:
         candidates: list[_CandidateTuple],
         top_k: int,
     ) -> list[_CandidateTuple]:
-        """Rerank candidates using cross-encoder scores.
-
-        If the model is unavailable, gracefully returns the first top_k candidates
-        from the original ranking.
-        """
+        """Rerank candidates using cross-encoder scores."""
         if not candidates:
             return []
 
-        if self._cross_encoder is None and not self._load_failed:
+        model = self._cross_encoder or RerankerService._cross_encoder
+        if model is None and not (self._load_failed or RerankerService._load_failed):
             self._load_model()
+            model = self._cross_encoder or RerankerService._cross_encoder
 
-        if self._cross_encoder is None:
+        if model is None:
             logger.warning("Cross-encoder unavailable; returning hybrid-ranked results.")
             return candidates[:top_k]
 
@@ -65,7 +71,7 @@ class RerankerService:
             pairs.append([query, candidate_text])
 
         try:
-            scores = self._cross_encoder.predict(pairs)
+            scores = model.predict(pairs)
         except (RuntimeError, ValueError, TypeError) as exc:
             logger.warning(f"Cross-encoder prediction failed ({type(exc).__name__}): {exc}")
             return candidates[:top_k]

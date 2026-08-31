@@ -12,7 +12,7 @@ interface NavPillProps {
   onClick: () => void;
 }
 
-export const NavPill: React.FC<NavPillProps> = ({ id, label, icon: Icon, active, onClick }) => {
+export const NavPill: React.FC<NavPillProps> = ({ label, icon: Icon, active, onClick }) => {
   return (
     <button
       onClick={onClick}

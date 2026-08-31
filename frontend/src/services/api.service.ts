@@ -149,12 +149,14 @@ export async function explainStandardStream(
 }
 
 export async function askProcurementAssistant(
-  question: string
+  question: string,
+  pdfText?: string,
+  chatHistory?: { role: string; content: string }[]
 ): Promise<{ question: string; answer: string }> {
   const res = await fetch(`${API_BASE}/ask-assistant`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, pdf_text: pdfText, chat_history: chatHistory }),
   });
   if (!res.ok) throw new Error("Assistant request failed");
   return res.json();
@@ -163,12 +165,14 @@ export async function askProcurementAssistant(
 export async function askProcurementAssistantStream(
   question: string,
   onChunk: (chunk: string) => void,
+  pdfText?: string,
+  chatHistory?: { role: string; content: string }[],
   signal?: AbortSignal
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/ask-assistant-stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, pdf_text: pdfText, chat_history: chatHistory }),
     signal,
   });
   if (!res.ok || !res.body) throw new Error("Assistant stream request failed");

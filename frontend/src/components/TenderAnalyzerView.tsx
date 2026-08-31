@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { Upload, FileText, Loader2 } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import { analyzeTenderDocument } from "../services/api.service";
 import { ViolationCard } from "./ViolationCard";
 import { clsx } from "clsx";
 import type { TenderAnalysisReport } from "../types";
 
-export const TenderAnalyzerView: React.FC = () => {
+export const TenderAnalyzerView: React.FC<{ setPdfText: (text: string) => void }> = ({ setPdfText }) => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<TenderAnalysisReport | null>(null);
@@ -16,6 +16,7 @@ export const TenderAnalyzerView: React.FC = () => {
     try {
       const res = await analyzeTenderDocument(f, undefined);
       setReport(res);
+      if (res.raw_text) setPdfText(res.raw_text);
     } catch {
       setReport(null);
     } finally { setLoading(false); }
@@ -46,7 +47,7 @@ export const TenderAnalyzerView: React.FC = () => {
         {loading ? (
           <div className="flex flex-col items-center gap-3 text-apple-blue">
             <Loader2 className="w-8 h-8 animate-spin" />
-            <span className="text-sm font-medium">Parsing PDF Pages...</span>
+            <span className="text-sm font-medium">Parsing Document Pages...</span>
           </div>
         ) : (
           <>
@@ -59,17 +60,17 @@ export const TenderAnalyzerView: React.FC = () => {
 
       {report && (
         <div className="w-full space-y-4">
-          <h3 className="text-lg font-semibold text-white/90">Specification Violations</h3>
+          <h3 className="text-lg font-semibold text-white/90">Specification Compliance Findings ({report.compliance_issues.length})</h3>
           <div className="grid gap-3">
-            {report.outdated_references.map((v, i) => (
+            {report.compliance_issues.map((issue, i) => (
               <ViolationCard key={i} violation={{
-                clause: "Gen", issue: `Outdated reference: ${v.standard_referenced}`, snippet: `Referenced ${v.standard_referenced}`, requirement: `Update to ${v.latest_active_version}`
+                clause: issue.category,
+                issue: issue.issue_text,
+                snippet: `Item in ${report.document_name}`,
+                requirement: issue.corrective_action,
+                severity: issue.severity.toLowerCase()
               }} />
             ))}
-            {/* Mocked violation for visual demonstration since API doesn't return full details */}
-            <ViolationCard violation={{
-              clause: "4.2.1", issue: "Material spec differs from IS 2062", snippet: "The steel plates shall have a minimum yield stress of 200 MPa.", requirement: "Minimum yield stress must be 250 MPa as per IS 2062:2011", severity: "high"
-            }} />
           </div>
         </div>
       )}

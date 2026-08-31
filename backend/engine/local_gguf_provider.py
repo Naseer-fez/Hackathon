@@ -19,11 +19,6 @@ class BackpressureError(Exception):
     """Raised when the LLM inference queue is full."""
 
 
-def _safe_get_next(iterator: Any) -> Any:
-    """Fetch next item safely without raising StopIteration into an asyncio.Future."""
-    return next(iterator, _STREAM_END)
-
-
 class LocalGgufLlmProvider(BaseLlmProvider):
     """Local GGUF provider with CUDA GPU acceleration, warm-up, and zero-unload caching."""
 
@@ -217,12 +212,28 @@ class LocalGgufLlmProvider(BaseLlmProvider):
             if position > 1:
                 yield json.dumps({"status": "queued", "position": position})
             async with self._semaphore:
-                gen = await asyncio.to_thread(self._sync_generate_stream, prompt, system_prompt)
+                loop = asyncio.get_running_loop()
+                queue: asyncio.Queue[str | object] = asyncio.Queue()
+
+                def worker() -> None:
+                    try:
+                        gen = self._sync_generate_stream(prompt, system_prompt)
+                        for chunk in gen:
+                            loop.call_soon_threadsafe(queue.put_nowait, chunk)
+                    except Exception as e:
+                        logger.warning(f"Local GGUF: worker thread error ({type(e).__name__}: {e})")
+                        loop.call_soon_threadsafe(queue.put_nowait, f"\\n[Error: {type(e).__name__}]")
+                    finally:
+                        loop.call_soon_threadsafe(queue.put_nowait, _STREAM_END)
+
+                thread = threading.Thread(target=worker)
+                thread.start()
+
                 while True:
-                    chunk = await asyncio.to_thread(_safe_get_next, gen)
+                    chunk = await queue.get()
                     if chunk is _STREAM_END:
                         break
-                    yield chunk
+                    yield chunk  # type: ignore
         except BackpressureError:
             raise
         except (ValueError, RuntimeError, OSError, Exception) as exc:

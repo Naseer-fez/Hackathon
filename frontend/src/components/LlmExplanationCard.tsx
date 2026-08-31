@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { Sparkles, AlertCircle, RefreshCw } from "lucide-react";
 import { explainStandardStream } from "../services/api.service";
 import { clsx } from "clsx";
@@ -17,25 +17,22 @@ export const LlmExplanationCard: React.FC<LlmExplanationCardProps> = ({ query, i
 
   const fetchExplanation = async (signal?: AbortSignal) => {
     if (!isCode) return;
-    setLoading(true); setError(false); setDisplayedText(""); textRef.current = "";
+    setLoading(true);
+    setError(false);
+    setDisplayedText("");
+    textRef.current = "";
     try {
       await explainStandardStream(query, isCode, (chunk) => {
         textRef.current += chunk;
         setDisplayedText(textRef.current);
       }, signal);
     } catch (err: any) {
-      if (err.name === 'AbortError') return;
+      if (err.name === "AbortError") return;
       setError(true);
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
   };
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchExplanation(controller.signal);
-    return () => controller.abort();
-  }, [query, isCode]);
 
   return (
     <div className="apple-glass border-apple-indigo/40 rounded-3xl p-6 space-y-4 shadow-[0_0_40px_rgba(94,92,230,0.1)]">
@@ -49,15 +46,32 @@ export const LlmExplanationCard: React.FC<LlmExplanationCardProps> = ({ query, i
             <span className="text-xs text-white/50">{isCode} - {title}</span>
           </div>
         </div>
-        <button
-          onClick={() => fetchExplanation()} disabled={loading}
-          className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all disabled:opacity-50"
-        >
-          <RefreshCw className={clsx("w-4 h-4", loading && "animate-spin text-apple-indigo")} />
-        </button>
+        {displayedText && (
+          <button
+            onClick={() => fetchExplanation()}
+            disabled={loading}
+            className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all disabled:opacity-50"
+            title="Regenerate explanation"
+          >
+            <RefreshCw className={clsx("w-4 h-4", loading && "animate-spin text-apple-indigo")} />
+          </button>
+        )}
       </div>
 
-      {!displayedText && loading ? (
+      {!displayedText && !loading ? (
+        <div className="flex flex-col items-center justify-center py-6 text-center space-y-3">
+          <p className="text-xs text-white/50 max-w-md">
+            Generate an AI evaluation comparing your procurement requirements against {isCode}.
+          </p>
+          <button
+            onClick={() => fetchExplanation()}
+            className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-apple-indigo/20 hover:bg-apple-indigo/30 text-apple-indigo border border-apple-indigo/30 text-xs font-semibold transition-all shadow-lg shadow-apple-indigo/10"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Generate Technical Justification</span>
+          </button>
+        </div>
+      ) : loading && !displayedText ? (
         <div className="space-y-3 py-2 animate-pulse">
           <div className="h-4 bg-white/10 rounded w-3/4" />
           <div className="h-4 bg-white/5 rounded w-full" />

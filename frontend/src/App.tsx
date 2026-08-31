@@ -9,6 +9,7 @@ import { AssistantChatDrawer } from "./components/AssistantChatDrawer";
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState("recommend");
+  const [pdfText, setPdfText] = useState<string>("");
 
   return (
     <div className="min-h-screen bg-apple-bg text-slate-100 flex flex-col font-sans selection:bg-apple-blue selection:text-white">
@@ -20,13 +21,13 @@ export const App: React.FC = () => {
         }`}
       >
         {activeTab === "recommend" && <RecommendationTab />}
-        {activeTab === "tender" && <TenderAnalyzerView />}
+        {activeTab === "tender" && <TenderAnalyzerView setPdfText={setPdfText} />}
         {activeTab === "graph" && <KnowledgeGraphView />}
         {activeTab === "qco" && <QcoExplorerView />}
         {activeTab === "gem" && <GemSimulatorView />}
       </main>
 
-      <AssistantChatDrawer />
+      <AssistantChatDrawer pdfText={pdfText} />
     </div>
   );
 };

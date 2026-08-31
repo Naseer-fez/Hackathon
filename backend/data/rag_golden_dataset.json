@@ -1,0 +1,7 @@
+[
+  {"query": "What BIS standard applies to TMT steel bars?", "expected_standard": "IS 1786"},
+  {"query": "Solar panel standards for government buildings", "expected_standard": "IS 14286"},
+  {"query": "Portland cement specifications", "expected_standard": "IS 269"},
+  {"query": "PVC insulated cables for house wiring", "expected_standard": "IS 694"},
+  {"query": "LED bulb energy efficiency standards", "expected_standard": "IS 16102"}
+]

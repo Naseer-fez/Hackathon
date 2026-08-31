@@ -22,8 +22,15 @@ class ExplainStandardRequest(BaseModel):
     is_code: str
 
 
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
 class AssistantQuestionRequest(BaseModel):
     question: str
+    pdf_text: str | None = None
+    chat_history: list[ChatMessage] | None = None
 
 
 class LlmExplanationResponse(BaseModel):
@@ -98,7 +105,7 @@ async def ask_assistant(req: AssistantQuestionRequest) -> AssistantAnswerRespons
     standards = [m[0] for m in matches] if matches else loader.get_all_standards()[:5]
     try:
         answer = await llm_service.answer_procurement_query(
-            question=req.question, context_standards=standards, document_chunks=evidences
+            question=req.question, context_standards=standards, document_chunks=evidences, pdf_text=req.pdf_text, chat_history=req.chat_history
         )
     except BackpressureError:
         raise HTTPException(status_code=429, detail="Server busy. Please retry.")
@@ -114,7 +121,7 @@ async def ask_assistant_stream(req: AssistantQuestionRequest) -> StreamingRespon
     async def stream_generator():
         try:
             async for chunk in llm_service.answer_procurement_query_stream(
-                question=req.question, context_standards=standards, document_chunks=evidences
+                question=req.question, context_standards=standards, document_chunks=evidences, pdf_text=req.pdf_text, chat_history=req.chat_history
             ):
                 yield f"data: {chunk}\n\n"
         except BackpressureError:

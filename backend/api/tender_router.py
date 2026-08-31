@@ -12,6 +12,7 @@ from backend.models.recommendation_model import StandardRecommendation
 from backend.models.tender_model import TenderAnalysisReport
 from backend.parsers.document_parser import DocumentParser
 from backend.parsers.spec_extractor import SpecExtractor
+from backend.parsers.llm_spec_extractor import LlmSpecExtractor
 
 router = APIRouter(prefix="/api/v1", tags=["tenders"])
 
@@ -27,6 +28,7 @@ clause_gen = TenderClauseGenerator()
 async def analyze_tender(
     file: UploadFile | None = File(None),
     raw_text: str | None = Form(None),
+    use_llm: bool = Form(False),
 ) -> TenderAnalysisReport:
     """Analyze tender document or text for Indian Standard compliance."""
     doc_name = "raw_tender_text.txt"
@@ -46,8 +48,13 @@ async def analyze_tender(
     elif raw_text:
         text_content = raw_text
 
-    items = await asyncio.to_thread(extractor.split_into_items, text_content)
-    issues = await asyncio.to_thread(extractor.identify_compliance_issues, items)
+    if use_llm:
+        llm_extractor = LlmSpecExtractor()
+        items = await llm_extractor.extract_items(text_content)
+        issues = llm_extractor.identify_compliance_issues(items)
+    else:
+        items = await asyncio.to_thread(extractor.split_into_items, text_content)
+        issues = await asyncio.to_thread(extractor.identify_compliance_issues, items)
     generated_clauses: list[str] = []
 
     for item in items:
@@ -84,4 +91,5 @@ async def analyze_tender(
         compliance_issues=issues,
         mandatory_qco_coverage=coverage,
         complete_spec_clause_text="\n\n".join(generated_clauses),
+        raw_text=text_content,
     )

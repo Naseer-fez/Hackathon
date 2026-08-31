@@ -1,5 +1,5 @@
 import React from "react";
-import { Search, Mic, Image as ImageIcon } from "lucide-react";
+import { Search, Mic } from "lucide-react";
 import { clsx } from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -19,7 +19,15 @@ export const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ query, setQuer
         "apple-glass-dark rounded-2xl flex items-center p-2 transition-all",
         "focus-within:ring-2 focus-within:ring-apple-indigo/50 focus-within:bg-black/60"
       )}>
-        <Search className="w-5 h-5 text-white/40 ml-3 mr-2" />
+        <button
+          type="button"
+          onClick={() => onSearch()}
+          disabled={loading || !query.trim()}
+          title="Search"
+          className="p-1 text-white/40 hover:text-white/90 disabled:opacity-40 transition-colors"
+        >
+          <Search className="w-5 h-5 ml-2 mr-2" />
+        </button>
         
         <div className="flex-1 relative h-10 flex items-center">
           <AnimatePresence>
@@ -41,26 +49,37 @@ export const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ query, setQuer
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && onSearch()}
-                placeholder="Search standards, e.g. Solar PV module..."
+                placeholder="Search standards, e.g. Solar PV module, TMT bars..."
                 className="w-full bg-transparent text-lg text-white/90 placeholder-white/30 focus:outline-none"
               />
             )}
           </AnimatePresence>
         </div>
 
-        <div className="flex items-center gap-1 pr-2">
-          <button className="p-2 text-white/40 hover:text-white/90 hover:bg-white/10 rounded-xl transition-colors">
-            <ImageIcon className="w-4 h-4" />
+        <div className="flex items-center gap-1.5 pr-2">
+          {query && (
+            <button 
+              onClick={() => setQuery("")}
+              className="px-2 py-1 text-white/40 hover:text-white/90 hover:bg-white/10 rounded-xl transition-colors text-xs"
+              title="Clear"
+            >
+              Clear
+            </button>
+          )}
+          <button
+            onClick={() => onSearch()}
+            disabled={loading || !query.trim()}
+            className="px-3.5 py-1.5 bg-apple-blue hover:bg-apple-blue/80 disabled:opacity-40 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-apple-blue/20"
+          >
+            {loading ? "Searching..." : "Search"}
           </button>
           <button 
             onClick={() => setIsRecording(!isRecording)}
             className={clsx("p-2 rounded-xl transition-colors", isRecording ? "text-apple-mint bg-apple-mint/20" : "text-white/40 hover:text-white/90 hover:bg-white/10")}
+            title="Voice input"
           >
             <Mic className="w-4 h-4" />
           </button>
-          <div className="hidden md:flex items-center gap-1 ml-2 px-2 py-1 rounded bg-white/5 border border-white/10">
-            <span className="text-[10px] font-mono text-white/40">⌘K</span>
-          </div>
         </div>
       </div>
     </div>

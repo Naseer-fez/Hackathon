@@ -11,8 +11,40 @@ from backend.engine.prompts import (
     MASTER_SYSTEM_PROMPT, format_chunk_excerpts, format_evaluation_prompt,
     format_tender_clause_prompt, format_testing_matrix_prompt
 )
+from backend.engine.embedding_service import get_embedding_service
 from backend.logger.app_logger import get_logger
 from backend.models.standard_model import IndianStandard
+
+def _retrieve_relevant_chunks(pdf_text: str, question: str, top_k: int = 3, chunk_size: int = 500, overlap: int = 50) -> list[str]:
+    """Dynamically chunks and retrieves the most relevant parts of a PDF for a given question."""
+    if not pdf_text or not pdf_text.strip():
+        return []
+    
+    chunks = []
+    start = 0
+    text_len = len(pdf_text)
+    while start < text_len:
+        end = min(start + chunk_size, text_len)
+        chunks.append(pdf_text[start:end])
+        if end == text_len:
+            break
+        start += (chunk_size - overlap)
+        
+    if not chunks:
+        return []
+        
+    embed_service = get_embedding_service()
+    q_vec = embed_service.get_embedding(question)
+    
+    scored_chunks = []
+    for chunk in chunks:
+        c_vec = embed_service.get_embedding(chunk)
+        score = embed_service.compute_similarity(q_vec, c_vec)
+        scored_chunks.append((score, chunk))
+        
+    scored_chunks.sort(key=lambda x: x[0], reverse=True)
+    return [c for _, c in scored_chunks[:top_k]]
+
 
 logger = get_logger("engine.llm_service")
 _CACHE: dict[str, BaseLlmProvider] = {}
@@ -96,9 +128,19 @@ class LlmService:
             logger.warning(f"LlmService: Stream error ({type(exc).__name__}: {exc})")
             yield "\n[Stream Interrupted]"
 
-    async def answer_procurement_query(self, question: str, context_standards: list[IndianStandard], document_chunks: list[Any] | None = None) -> str:
+    async def answer_procurement_query(self, question: str, context_standards: list[IndianStandard], document_chunks: list[Any] | None = None, pdf_text: str | None = None, chat_history: list[Any] | None = None) -> str:
         c_str = "\n".join(f"- {s.is_code}: {s.title}" for s in context_standards[:5])
-        user_p = f"Procurement Query: {question}\n\nAvailable Standards:\n{c_str}\n\nDocument Excerpts:\n{format_chunk_excerpts(document_chunks)}"
+        
+        history_str = ""
+        if chat_history:
+            formatted_history = "\n".join(f"{msg.role.capitalize()}: {msg.content}" for msg in chat_history)
+            history_str = f"Previous Conversation:\n{formatted_history}\n\n"
+            
+        user_p = f"{history_str}Current Procurement Query: {question}\n\nAvailable Standards:\n{c_str}\n\nDocument Excerpts:\n{format_chunk_excerpts(document_chunks)}"
+        if pdf_text:
+            relevant_chunks = _retrieve_relevant_chunks(pdf_text, question)
+            chunks_str = "\n\n".join(f"--- Excerpt ---\n{c}" for c in relevant_chunks)
+            user_p += f"\n\nRelevant Excerpts from Uploaded Document:\n{chunks_str}\n\nPlease prioritize answering based on the provided Relevant Excerpts from Uploaded Document."
         try:
             res = await self._provider.generate_text(user_p, MASTER_SYSTEM_PROMPT)
             if res and res.strip():
@@ -107,9 +149,19 @@ class LlmService:
             logger.warning(f"LlmService: Query error ({type(exc).__name__}: {exc})")
         return "No LLM model is currently available to answer this query. Please check model status."
 
-    async def answer_procurement_query_stream(self, question: str, context_standards: list[IndianStandard], document_chunks: list[Any] | None = None) -> AsyncGenerator[str, None]:
+    async def answer_procurement_query_stream(self, question: str, context_standards: list[IndianStandard], document_chunks: list[Any] | None = None, pdf_text: str | None = None, chat_history: list[Any] | None = None) -> AsyncGenerator[str, None]:
         c_str = "\n".join(f"- {s.is_code}: {s.title}" for s in context_standards[:5])
-        user_p = f"Procurement Query: {question}\n\nAvailable Standards:\n{c_str}\n\nDocument Excerpts:\n{format_chunk_excerpts(document_chunks)}"
+        
+        history_str = ""
+        if chat_history:
+            formatted_history = "\n".join(f"{msg.role.capitalize()}: {msg.content}" for msg in chat_history)
+            history_str = f"Previous Conversation:\n{formatted_history}\n\n"
+            
+        user_p = f"{history_str}Current Procurement Query: {question}\n\nAvailable Standards:\n{c_str}\n\nDocument Excerpts:\n{format_chunk_excerpts(document_chunks)}"
+        if pdf_text:
+            relevant_chunks = _retrieve_relevant_chunks(pdf_text, question)
+            chunks_str = "\n\n".join(f"--- Excerpt ---\n{c}" for c in relevant_chunks)
+            user_p += f"\n\nRelevant Excerpts from Uploaded Document:\n{chunks_str}\n\nPlease prioritize answering based on the provided Relevant Excerpts from Uploaded Document."
         try:
             async for chunk in self._provider.generate_text_stream(user_p, MASTER_SYSTEM_PROMPT):
                 yield chunk

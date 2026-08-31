@@ -110,6 +110,7 @@ export interface TenderAnalysisReport {
   compliance_issues: ComplianceIssue[];
   mandatory_qco_coverage: number;
   complete_spec_clause_text: string;
+  raw_text?: string;
 }
 
 export interface GraphData {

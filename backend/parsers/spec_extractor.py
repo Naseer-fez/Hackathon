@@ -22,12 +22,22 @@ class SpecExtractor:
 
     def split_into_items(self, text: str) -> list[ExtractedLineItem]:
         """Segment raw text into procurement line items."""
+        # Force double newline before ITEM or SL NO to ensure they are split properly
+        text = re.sub(r'(?im)^((?:ITEM|SL\s*NO\.?|S\.NO\.?)\s*\d+[\s.-])', r'\n\n\1', text)
+        
         paragraphs = [p.strip() for p in text.split("\n\n") if len(p.strip()) > 30]
         if not paragraphs:
             paragraphs = [text.strip()] if text.strip() else []
 
+        # If we found ITEM markers, try to filter out preamble/headers
+        has_items = any(re.match(r'(?i)^(ITEM|SL\s*NO\.?|S\.NO\.?)\s*\d+', p) for p in paragraphs)
+
         items: list[ExtractedLineItem] = []
         for idx, para in enumerate(paragraphs, start=1):
+            if has_items and not re.match(r'(?i)^(ITEM|SL\s*NO\.?|S\.NO\.?)\s*\d+', para):
+                # Skip paragraphs that are just preamble if this document clearly uses ITEM markers
+                continue
+                
             cited = self.find_cited_standards(para)
             outdated: list[str] = []
 
@@ -48,6 +58,11 @@ class SpecExtractor:
                     outdated_citations=outdated,
                 )
             )
+        
+        # Re-number item_id if we skipped preambles
+        for i, item in enumerate(items, start=1):
+            item.item_id = i
+
         return items
 
     def identify_compliance_issues(

@@ -22,7 +22,7 @@ ai_engine:
   top_k_recommendations: 5
   hybrid_alpha: 0.65
   enable_gpu: true
-  reranker_model: "BAAI/bge-reranker-small"
+  reranker_model: "d:/CODE/Hackathon/llm/bge-reranker-small"
   reranker_candidate_pool: 25
   domain_expansions_file: "d:/CODE/Hackathon/backend/config/domain_expansions.yaml"
 

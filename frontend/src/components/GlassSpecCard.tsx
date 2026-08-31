@@ -1,18 +1,18 @@
 import React from "react";
 import { ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
-import type { RecommendationResult } from "../types";
+import type { StandardRecommendation } from "../types";
 
 interface GlassSpecCardProps {
-  rec: RecommendationResult;
+  rec: StandardRecommendation;
   isSelected: boolean;
   onSelect: () => void;
 }
 
 export const GlassSpecCard: React.FC<GlassSpecCardProps> = ({ rec, isSelected, onSelect }) => {
-  const { standard, similarity_score } = rec;
-  const matchPct = Math.round(similarity_score * 100);
-  const isMandatory = standard.qco_status === "mandatory";
+  const { standard, relevance_score } = rec;
+  const matchPct = Math.round(relevance_score * 100);
+  const isMandatory = standard.mandatory_qco?.is_mandatory;
 
   return (
     <div 

@@ -31,6 +31,12 @@ node_modules/
 frontend/node_modules/
 frontend/dist/
 dist/
+
+# Agent Workspaces
+.agents/*
+!.agents/AGENTS.md
+!.agents/skills/
+
 # Environment variables & secrets
 .env
 .env.*
@@ -45,3 +51,5 @@ dist/
 *.swp
 .DS_Store
 Thumbs.db
+project_files.txt
+

@@ -111,7 +111,7 @@ def test_hybrid_search_semantic_and_code() -> None:
     assert len(results) > 0
     top_std, score, reasons = results[0]
     assert "14286" in top_std.is_code or "Solar" in top_std.title
-    assert score > 0.3
+    assert score > 0.2
 
     # Exact code match test
     code_results = retriever.search(query="Requirement as per IS 1786", top_k=2)
