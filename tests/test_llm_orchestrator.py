@@ -1,6 +1,7 @@
 """Tests for LLM Orchestrator, Cloud-Primary execution, and silent local fallback."""
 from __future__ import annotations
 
+from typing import AsyncGenerator
 import pytest
 from backend.engine.llm_interface import BaseLlmProvider
 from backend.engine.llm_orchestrator import LlmOrchestrator
@@ -13,17 +14,27 @@ class MockCloudSuccessProvider(BaseLlmProvider):
     async def generate_text(self, prompt: str, system_prompt: str | None = None) -> str:
         return "Cloud LLM Analysis: The recommended standard is IS 14286. Mandatory CRS applies."
 
+    async def generate_text_stream(self, prompt: str, system_prompt: str | None = None) -> AsyncGenerator[str, None]:
+        yield "Cloud LLM Analysis: The recommended standard is IS 14286."
+
 
 class MockCloudFailingProvider(BaseLlmProvider):
     """Simulates Cloud LLM failure (rate limit, timeout, 500 error)."""
     async def generate_text(self, prompt: str, system_prompt: str | None = None) -> str:
         raise ConnectionError("Cloud API unreachable or timed out")
 
+    async def generate_text_stream(self, prompt: str, system_prompt: str | None = None) -> AsyncGenerator[str, None]:
+        raise ConnectionError("Cloud API stream error")
+        yield ""
+
 
 class MockLocalProvider(BaseLlmProvider):
     """Simulates Local GGUF LLM inference."""
     async def generate_text(self, prompt: str, system_prompt: str | None = None) -> str:
         return "Local GGUF Analysis: IS 14286 applies for terrestrial PV solar modules."
+
+    async def generate_text_stream(self, prompt: str, system_prompt: str | None = None) -> AsyncGenerator[str, None]:
+        yield "Local GGUF Analysis: IS 14286 applies."
 
 
 @pytest.fixture

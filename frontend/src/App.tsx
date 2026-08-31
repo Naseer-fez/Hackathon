@@ -11,10 +11,14 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState("recommend");
 
   return (
-    <div className="min-h-screen bg-[#070c18] text-slate-100 flex flex-col font-sans selection:bg-blue-600">
+    <div className="min-h-screen bg-apple-bg text-slate-100 flex flex-col font-sans selection:bg-apple-blue selection:text-white">
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+      <main 
+        className={`flex-1 w-full mx-auto relative ${
+          activeTab === "graph" ? "max-w-none p-0" : "max-w-7xl p-6 space-y-6 pt-24"
+        }`}
+      >
         {activeTab === "recommend" && <RecommendationTab />}
         {activeTab === "tender" && <TenderAnalyzerView />}
         {activeTab === "graph" && <KnowledgeGraphView />}

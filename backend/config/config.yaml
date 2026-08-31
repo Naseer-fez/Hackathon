@@ -1,11 +1,12 @@
 server:
-  host: "127.0.0.1"
+  host: "0.0.0.0"
   port: 8000
   log_level: "INFO"
   cors_origins:
     - "http://localhost:3000"
     - "http://localhost:5173"
     - "http://127.0.0.1:5173"
+    - "http://192.168.1.9:5173"
     - "*"
 
 storage:
@@ -15,22 +16,50 @@ storage:
   upload_dir: "d:/CODE/Hackathon/backend/data/uploads"
 
 ai_engine:
-  embedding_model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  embedding_model_name: "d:/CODE/Hackathon/llm/all-MiniLM-L6-v2"
   multilingual_model_name: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
   similarity_threshold: 0.35
   top_k_recommendations: 5
   hybrid_alpha: 0.65
-  enable_gpu: false
+  enable_gpu: true
+  reranker_model: "BAAI/bge-reranker-small"
+  reranker_candidate_pool: 25
+  domain_expansions_file: "d:/CODE/Hackathon/backend/config/domain_expansions.yaml"
 
 llm:
-  provider: "fallback"
-  model_name: "gemini-2.0-flash"
+  provider: "local_gguf"
+  model_name: "Qwen2.5-7B-Instruct-Q4_K_M"
+  model_path: "d:/CODE/Hackathon/llm/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
+  n_ctx: 4096
+  n_threads: 4
+  n_gpu_layers: 24
+  chat_format: "chatml"
   api_key_env_var: "GEMINI_API_KEY"
+  openrouter_api_key_env_var: "OPENROUTER_API_KEY"
   temperature: 0.2
-  max_tokens: 1024
+  max_tokens: 2048
+  enable_grammar: true
+  grammar_file: "d:/CODE/Hackathon/backend/engine/grammars/bis_output.gbnf"
+  max_queue_size: 5
+
+cache:
+  sqlite_db_path: "d:/CODE/Hackathon/backend/data/semantic_cache.db"
+  similarity_threshold: 0.95
+
+voice:
+  stt_model_path: "d:/CODE/Hackathon/llm/faster-whisper-tiny"
+  tts_eng_model_path: "d:/CODE/Hackathon/llm/mms-tts-eng"
+  tts_hin_model_path: "d:/CODE/Hackathon/llm/mms-tts-hin"
 
 bis_scraper:
   base_url: "https://www.services.bis.gov.in/php/BIS_2.0/bisconnect/knowyourstandards/indian_standards/isdetails"
   qco_portal_url: "https://www.bis.gov.in/product-certification/products-under-compulsory-certification/"
   request_timeout_sec: 15
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+logging:
+  log_dir: "d:/CODE/Hackathon/backend/logs"
+  log_file: "d:/CODE/Hackathon/backend/logs/backend.log"
+  level: "INFO"
+  rotation_max_bytes: 10485760
+  backup_count: 5

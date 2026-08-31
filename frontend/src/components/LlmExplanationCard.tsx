@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Sparkles, AlertCircle, RefreshCw } from "lucide-react";
-import { explainStandard } from "../services/api.service";
+import { explainStandardStream } from "../services/api.service";
+import { clsx } from "clsx";
 
 interface LlmExplanationCardProps {
   query: string;
@@ -8,30 +9,25 @@ interface LlmExplanationCardProps {
   title: string;
 }
 
-export const LlmExplanationCard: React.FC<LlmExplanationCardProps> = ({
-  query,
-  isCode,
-  title,
-}) => {
-  const [explanation, setExplanation] = useState<string | null>(null);
+export const LlmExplanationCard: React.FC<LlmExplanationCardProps> = ({ query, isCode, title }) => {
+  const [displayedText, setDisplayedText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const textRef = useRef("");
 
   const fetchExplanation = async (signal?: AbortSignal) => {
     if (!isCode) return;
-    setLoading(true);
-    setError(false);
+    setLoading(true); setError(false); setDisplayedText(""); textRef.current = "";
     try {
-      const res = await explainStandard(query, isCode, signal);
-      setExplanation(res.explanation);
+      await explainStandardStream(query, isCode, (chunk) => {
+        textRef.current += chunk;
+        setDisplayedText(textRef.current);
+      }, signal);
     } catch (err: any) {
       if (err.name === 'AbortError') return;
       setError(true);
-      setExplanation(null);
     } finally {
-      if (!signal?.aborted) {
-        setLoading(false);
-      }
+      if (!signal?.aborted) setLoading(false);
     }
   };
 
@@ -42,45 +38,42 @@ export const LlmExplanationCard: React.FC<LlmExplanationCardProps> = ({
   }, [query, isCode]);
 
   return (
-    <div className="bg-gradient-to-br from-indigo-950/40 via-slate-900/80 to-slate-900/80 border border-indigo-500/30 rounded-2xl p-5 space-y-3 shadow-xl shadow-indigo-950/20">
-      <div className="flex items-center justify-between border-b border-indigo-900/40 pb-3">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400">
-            <Sparkles className="w-4 h-4" />
+    <div className="apple-glass border-apple-indigo/40 rounded-3xl p-6 space-y-4 shadow-[0_0_40px_rgba(94,92,230,0.1)]">
+      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-full bg-apple-indigo/20 text-apple-indigo">
+            <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-300">
-              AI Technical Justification & Reasoning
-            </h4>
-            <span className="text-[11px] text-slate-400">
-              Grounding: {isCode} - {title}
-            </span>
+            <h4 className="text-sm font-semibold text-white/90 tracking-tight">AI Technical Justification</h4>
+            <span className="text-xs text-white/50">{isCode} - {title}</span>
           </div>
         </div>
         <button
-          onClick={() => fetchExplanation()}
-          disabled={loading}
-          title="Regenerate reasoning"
-          className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all disabled:opacity-50"
+          onClick={() => fetchExplanation()} disabled={loading}
+          className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all disabled:opacity-50"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={clsx("w-4 h-4", loading && "animate-spin text-apple-indigo")} />
         </button>
       </div>
 
-      {loading ? (
-        <div className="space-y-2 py-2 animate-pulse">
-          <div className="h-3.5 bg-indigo-900/40 rounded w-3/4" />
-          <div className="h-3.5 bg-indigo-900/30 rounded w-full" />
-          <div className="h-3.5 bg-indigo-900/20 rounded w-5/6" />
+      {!displayedText && loading ? (
+        <div className="space-y-3 py-2 animate-pulse">
+          <div className="h-4 bg-white/10 rounded w-3/4" />
+          <div className="h-4 bg-white/5 rounded w-full" />
+          <div className="h-4 bg-white/5 rounded w-5/6" />
         </div>
       ) : error ? (
-        <div className="flex items-center gap-2 text-xs text-amber-400/90 py-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <div className="flex items-center gap-2 text-sm text-apple-amber py-4 font-medium">
+          <AlertCircle className="w-5 h-5 shrink-0" />
           <span>Could not load AI explanation. Click refresh to retry.</span>
         </div>
       ) : (
-        <div className="text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-wrap bg-slate-950/60 p-3.5 rounded-xl border border-indigo-900/30">
-          {explanation}
+        <div className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">
+          {displayedText}
+          {loading && (
+            <span className="inline-block w-1.5 h-4 ml-1 bg-apple-indigo animate-pulse align-middle" />
+          )}
         </div>
       )}
     </div>

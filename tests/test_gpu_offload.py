@@ -52,6 +52,6 @@ def test_provider_falls_back_to_cpu_when_gpu_fails(monkeypatch: pytest.MonkeyPat
     assert model is not None
     gpu_attempts = [a for a in attempts if a[1] == 33]
     cpu_attempts = [a for a in attempts if a[1] == 0]
-    assert len(gpu_attempts) == 3
+    assert len(gpu_attempts) == 2
     assert len(cpu_attempts) >= 1
     assert cpu_attempts[0][1] == 0

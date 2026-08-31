@@ -11,6 +11,8 @@ from backend.logger.app_logger import get_logger
 from backend.models.recommendation_model import DocumentChunkEvidence
 from backend.models.standard_model import IndianStandard
 from backend.vectordb.search_service import VectorDbSearchService
+from backend.engine.query_expander import QueryExpander
+from backend.engine.reranker_service import RerankerService
 
 logger = get_logger("engine.hybrid_retriever")
 
@@ -23,6 +25,8 @@ class HybridRetriever:
         self._embed_svc = embed_svc or EmbeddingService()
         self._vectordb = VectorDbSearchService()
         self._standards = self._loader.get_all_standards()
+        self._expander = QueryExpander()
+        self._reranker = RerankerService()
 
     def _calculate_lexical_score(self, query: str, s: IndianStandard) -> float:
         target = f"{s.is_code} {s.title} {' '.join(s.category_keywords)}".lower()
@@ -32,15 +36,22 @@ class HybridRetriever:
         """Perform Stage 1: Macro Standard Discovery."""
         if not query.strip():
             return []
+            
+        # Task 1.1: Query Expansion
+        expanded_query = self._expander.expand(query)
+        
         results_map: dict[str, tuple[IndianStandard, float, list[str]]] = {}
         alpha = app_settings.ai_engine.hybrid_alpha
-        logger.info(f"HybridRetriever: Macro search for '{query}' (Division: {division or 'All'})")
+        logger.info(f"HybridRetriever: Macro search for '{expanded_query}' (Division: {division or 'All'})")
+        
+        pool_size = getattr(app_settings.ai_engine, "reranker_candidate_pool", 25)
 
         try:
-            hits = self._vectordb.search(query=query, division=division, top_k=top_k * 2)
+            hits = self._vectordb.search(query=expanded_query, division=division, top_k=pool_size)
             for hit in hits:
                 std = hydrate_standard_from_chroma(hit, self._loader)
-                lex_score, dense_score = self._calculate_lexical_score(query, std), float(hit.get("similarity_score", 0.0))
+                lex_score = self._calculate_lexical_score(expanded_query, std)
+                dense_score = float(hit.get("similarity_score", 0.0))
                 hybrid_score = (alpha * dense_score) + ((1.0 - alpha) * lex_score)
                 reasons = [f"ChromaDB Vector match ({dense_score:.2f})"]
                 if lex_score > 0.4:
@@ -52,10 +63,10 @@ class HybridRetriever:
         for s in self._standards:
             if division and s.division.upper() != division.upper():
                 continue
-            lex_score = self._calculate_lexical_score(query, s)
+            lex_score = self._calculate_lexical_score(expanded_query, s)
             reasons = []
             code_num = re.sub(r"[^\d]", "", s.is_code)
-            if code_num and code_num in query:
+            if code_num and code_num in query:  # use original query for exact code match check
                 lex_score, reasons = max(lex_score, 0.95), [f"Direct match on standard code {s.is_code}"]
             if s.is_code in results_map:
                 std, ex_sc, ex_r = results_map[s.is_code]
@@ -64,11 +75,17 @@ class HybridRetriever:
                 results_map[s.is_code] = (s, lex_score, [f"Curated catalog match ({lex_score:.2f})"])
 
         ranked = sorted(results_map.values(), key=lambda item: item[1], reverse=True)
-        return ranked[:top_k]
+        
+        # Task 1.2: Cross-Encoder Reranking
+        candidates = ranked[:pool_size]
+        final_ranked = self._reranker.rerank(query, candidates, top_k)
+        
+        return final_ranked
 
     def search_document_evidence(self, query: str, top_k: int = 5) -> list[DocumentChunkEvidence]:
         """Perform Stage 2: Micro Evidence & Deep Clause Retrieval from PDF chunks."""
-        raw_chunks = self._vectordb.search_document_chunks(query=query, top_k=top_k)
+        expanded_query = self._expander.expand(query)
+        raw_chunks = self._vectordb.search_document_chunks(query=expanded_query, top_k=top_k)
         evidences: list[DocumentChunkEvidence] = []
         for c in raw_chunks:
             evidences.append(DocumentChunkEvidence(
@@ -93,5 +110,3 @@ class HybridRetriever:
                     ev.matched_standard = c
                     break
         return standards, evidences
-
-

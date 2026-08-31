@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 from backend.config.settings import app_settings
 from backend.logger.app_logger import get_logger
+from backend.vectordb.embedding_function import _SHARED_LOCK, _SHARED_MODEL_CACHE
 
 logger = get_logger("engine.embedding_service")
 _GLOBAL_EMBED_SERVICE: EmbeddingService | None = None
@@ -45,15 +46,17 @@ class EmbeddingService:
     def _try_load_model(self) -> None:
         if self._model is not None or self._is_offline:
             return
-        with self._lock:
-            if self._model is not None or self._is_offline:
+        with _SHARED_LOCK:
+            if self._model_name in _SHARED_MODEL_CACHE:
+                self._model = _SHARED_MODEL_CACHE[self._model_name]
                 return
             try:
                 from sentence_transformers import SentenceTransformer
                 import torch
                 device = "cuda" if (app_settings.ai_engine.enable_gpu and torch.cuda.is_available()) else "cpu"
                 logger.info(f"EmbeddingService: Loading '{self._model_name}' on {device}...")
-                self._model = SentenceTransformer(self._model_name, local_files_only=False, device=device)
+                self._model = SentenceTransformer(self._model_name, device=device)
+                _SHARED_MODEL_CACHE[self._model_name] = self._model
             except (OSError, ValueError, RuntimeError, ImportError) as exc:
                 logger.warning(f"EmbeddingService: Load error ({type(exc).__name__}) -> fallback")
                 self._is_offline, self._model = True, None

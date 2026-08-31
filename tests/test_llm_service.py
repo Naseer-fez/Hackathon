@@ -37,10 +37,16 @@ async def test_llm_providers_and_fallback() -> None:
     assert isinstance(res_gguf, str)
 
 
+from typing import AsyncGenerator
+
+
 class MockServiceLlmProvider(BaseLlmProvider):
     """Mock provider for fast service testing."""
     async def generate_text(self, prompt: str, system_prompt: str | None = None) -> str:
         return "Grounded BIS technical reasoning and test conformance."
+
+    async def generate_text_stream(self, prompt: str, system_prompt: str | None = None) -> AsyncGenerator[str, None]:
+        yield "Grounded BIS technical reasoning and test conformance."
 
 
 @pytest.mark.asyncio

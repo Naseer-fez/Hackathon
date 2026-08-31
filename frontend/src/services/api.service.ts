@@ -1,6 +1,6 @@
 import type { GraphData, IndianStandard, MandatoryQCO, RecommendationResponse, TenderAnalysisReport } from "../types";
 
-const API_BASE = "/api/v1";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "/api/v1";
 
 export async function fetchRecommendations(
   query: string,
@@ -100,6 +100,28 @@ export async function explainStandard(
   return res.json();
 }
 
+export async function explainStandardStream(
+  query: string,
+  isCode: string,
+  onChunk: (chunk: string) => void,
+  signal?: AbortSignal
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/explain-standard-stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query, is_code: isCode }),
+    signal,
+  });
+  if (!res.ok || !res.body) throw new Error("Failed to stream explanation");
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    onChunk(decoder.decode(value, { stream: true }));
+  }
+}
+
 export async function askProcurementAssistant(
   question: string
 ): Promise<{ question: string; answer: string }> {
@@ -110,5 +132,26 @@ export async function askProcurementAssistant(
   });
   if (!res.ok) throw new Error("Assistant request failed");
   return res.json();
+}
+
+export async function askProcurementAssistantStream(
+  question: string,
+  onChunk: (chunk: string) => void,
+  signal?: AbortSignal
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/ask-assistant-stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+    signal,
+  });
+  if (!res.ok || !res.body) throw new Error("Assistant stream request failed");
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    onChunk(decoder.decode(value, { stream: true }));
+  }
 }
 

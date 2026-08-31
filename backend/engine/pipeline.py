@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import tempfile
 from pydantic import BaseModel, Field
+from backend.engine.cache_service import SemanticCacheService
 from backend.engine.certification_advisor import CertificationAdvisor
 from backend.engine.hybrid_retriever import HybridRetriever
 from backend.engine.llm_orchestrator import LlmOrchestrator
@@ -14,6 +15,9 @@ from backend.models.llm_contracts import LlmInputContract, LlmStandardizedRespon
 from backend.models.recommendation_model import DocumentChunkEvidence, StandardRecommendation
 from backend.parsers.document_parser import DocumentParser
 from backend.parsers.image_classifier import ImageClassificationResult, ImageClassifier
+from backend.logger.app_logger import get_logger
+
+logger = get_logger("engine.pipeline")
 
 
 class PipelineResponse(BaseModel):
@@ -41,6 +45,7 @@ class RecommendationPipeline:
         self._image_clf = ImageClassifier()
         self._voice_svc = VoiceService()
         self._llm = LlmOrchestrator()
+        self._cache = SemanticCacheService()
 
     async def process_input(
         self, query: str | None = None, pdf_bytes: bytes | None = None,
@@ -70,6 +75,12 @@ class RecommendationPipeline:
         comb_txt = " ".join(raw_parts)
         sq = eff_query or (comb_txt[:300] if comb_txt else "General Indian Standards")
         exp_q, lang = self._multi.translate_and_expand(sq)
+
+        cached = await self._cache.check_cache(exp_q)
+        if cached is not None:
+            logger.info(f"Cache HIT for query: {exp_q[:50]}...")
+            return cached
+
         matches, evidences = self._retriever.search_with_evidence(query=exp_q, division=division, top_k=5, top_k_chunks=5)
 
         recs = [
@@ -90,8 +101,10 @@ class RecommendationPipeline:
         llm_out = await self._llm.execute(llm_in)
         v_b64 = base64.b64encode(self._voice_svc.synthesize_speech(llm_out.technical_justification)).decode("ascii") if (generate_voice_response and llm_out) else None
 
-        return PipelineResponse(
+        response = PipelineResponse(
             query=sq, detected_language=lang, extracted_text_snippet=comb_txt[:300],
             image_analysis=img_res, recommendations=recs, document_evidences=evidences,
             llm_analysis=llm_out, voice_audio_base64=v_b64,
         )
+        await self._cache.store_cache(exp_q, response)
+        return response

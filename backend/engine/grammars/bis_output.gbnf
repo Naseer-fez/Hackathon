@@ -1,0 +1,13 @@
+# GBNF Grammar: Constrained IS Code References for BIS-SpecAI
+#
+# Ensures any Indian Standard reference follows the format: IS <digits>:<4-digit year>
+# e.g. IS 1786:2008, IS 456:2000, IS 10262:2019
+#
+# Free-form text is unconstrained; only sequences starting with "IS " followed by
+# digits are forced into the IS <num>:<year> pattern.
+
+root        ::= (is-ref | safe-char)*
+is-ref      ::= "IS " digits ":" year
+digits      ::= [0-9] [0-9]*
+year        ::= [0-9] [0-9] [0-9] [0-9]
+safe-char   ::= [^\n] | "\n"

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Share2, RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
+import { RefreshCw, ZoomIn, ZoomOut, Share2, Info } from "lucide-react";
 import { fetchKnowledgeGraph } from "../services/api.service";
+import { motion, AnimatePresence } from "framer-motion";
 import type { GraphData } from "../types";
+import { clsx } from "clsx";
 
 export const KnowledgeGraphView: React.FC = () => {
   const [data, setData] = useState<GraphData | null>(null);
@@ -12,87 +14,82 @@ export const KnowledgeGraphView: React.FC = () => {
   const loadGraph = async () => {
     setLoading(true);
     try {
-      const res = await fetchKnowledgeGraph();
-      setData(res);
-    } catch {
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
+      setData(await fetchKnowledgeGraph());
+    } catch { setData(null); } finally { setLoading(false); }
   };
-
-  useEffect(() => {
-    loadGraph();
-  }, []);
+  useEffect(() => { loadGraph(); }, []);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
-        <div>
-          <h3 className="font-bold text-base text-white flex items-center gap-2">
-            <Share2 className="w-5 h-5 text-blue-400" />
-            BIS Indian Standards Normative & Allied Knowledge Graph
-          </h3>
-          <p className="text-xs text-slate-400">
-            Interactive multi-relational network topology of Indian Standards, normative references, and test methods.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setZoom((z) => Math.max(0.6, z - 0.2))} className="p-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700">
-            <ZoomOut className="w-4 h-4" />
-          </button>
-          <button onClick={() => setZoom((z) => Math.min(1.8, z + 0.2))} className="p-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700">
-            <ZoomIn className="w-4 h-4" />
-          </button>
-          <button onClick={loadGraph} className="p-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl hover:bg-blue-600/30">
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+    <div className="absolute inset-0 overflow-hidden bg-black flex items-center justify-center">
+      {/* Background Mesh */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-apple-indigo/20 via-black to-black opacity-60" />
+
+      {/* Floating Toolbar */}
+      <div className="absolute top-28 left-6 z-10">
+        <div className="apple-glass rounded-2xl p-2 flex flex-col gap-2 shadow-2xl">
+          <button onClick={() => setZoom(z => Math.max(0.4, z - 0.2))} className="p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-all"><ZoomOut className="w-5 h-5" /></button>
+          <button onClick={() => setZoom(z => Math.min(2, z + 0.2))} className="p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-all"><ZoomIn className="w-5 h-5" /></button>
+          <div className="h-px bg-white/10 mx-2" />
+          <button onClick={loadGraph} className="p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-all">
+            <RefreshCw className={clsx("w-5 h-5", loading && "animate-spin text-apple-mint")} />
           </button>
         </div>
       </div>
 
-      <div className="relative h-[480px] bg-[#070d18] border border-slate-800 rounded-2xl overflow-hidden flex items-center justify-center">
-        {loading ? (
-          <div className="text-center text-slate-400 text-sm animate-pulse">Loading Knowledge Graph...</div>
-        ) : !data || data.nodes.length === 0 ? (
-          <div className="text-slate-500 text-sm">No graph data available</div>
-        ) : (
-          <div className="w-full h-full p-6 overflow-auto">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" style={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}>
-              {data.nodes.map((node) => (
-                <div
-                  key={node.id}
-                  onClick={() => setSelectedNode(node)}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                    node.is_mandatory
-                      ? "bg-amber-950/20 border-amber-600/50 hover:border-amber-400 shadow-md shadow-amber-950/30"
-                      : "bg-slate-900/80 border-slate-700/60 hover:border-blue-500"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-xs text-white">{node.label}</span>
-                    <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-semibold">
-                      {node.division}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 truncate">{node.title}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {selectedNode && (
-        <div className="bg-slate-900/90 border border-blue-500/40 p-4 rounded-2xl flex items-center justify-between text-xs">
-          <div>
-            <span className="font-bold text-blue-300 text-sm">{selectedNode.label}</span>: {selectedNode.title}
-            <div className="text-slate-400 mt-0.5">Division: {selectedNode.division} | Status: {selectedNode.status}</div>
-          </div>
-          <button onClick={() => setSelectedNode(null)} className="text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded-lg">
-            Dismiss
-          </button>
-        </div>
+      {/* Graph Area */}
+      {loading ? (
+        <div className="animate-pulse text-white/40 tracking-widest text-sm font-medium z-10">Initializing Spatial Graph...</div>
+      ) : (
+        <motion.div 
+          className="relative w-full h-full flex flex-wrap content-center justify-center gap-10 p-20 z-0"
+          animate={{ scale: zoom }} transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        >
+          {data?.nodes.map((node, i) => (
+            <motion.div
+              key={node.id}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.05, type: "spring" }}
+              onClick={() => setSelectedNode(node)}
+              className={clsx(
+                "w-28 h-28 rounded-full apple-glass flex flex-col items-center justify-center cursor-pointer hover:scale-110 transition-transform relative group",
+                node.is_mandatory ? "border-apple-red shadow-[0_0_30px_rgba(255,69,58,0.3)]" : "border-apple-blue/50"
+              )}
+            >
+              <Share2 className={clsx("w-6 h-6 mb-1 opacity-50", node.is_mandatory ? "text-apple-red" : "text-apple-blue")} />
+              <span className="text-xs font-semibold text-white/90 text-center px-2">{node.label}</span>
+              
+              {/* Dependency Lines (Mocked via pseudo elements for visual effect) */}
+              <div className="absolute inset-0 rounded-full border border-white/5 scale-[1.5] -z-10 group-hover:scale-[2] transition-transform duration-500" />
+            </motion.div>
+          ))}
+        </motion.div>
       )}
+
+      {/* Glass Node Popover */}
+      <AnimatePresence>
+        {selectedNode && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="absolute bottom-10 z-20 w-96 apple-glass-dark rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/20"
+          >
+            <div className="flex justify-between items-start mb-3">
+              <h4 className="text-xl font-semibold text-white tracking-tight flex items-center gap-2">
+                <Info className="w-5 h-5 text-apple-blue" />
+                {selectedNode.label}
+              </h4>
+              <button onClick={() => setSelectedNode(null)} className="text-white/40 hover:text-white px-3 py-1 bg-white/10 rounded-full text-xs">Dismiss</button>
+            </div>
+            <p className="text-sm text-white/70 leading-relaxed mb-4">{selectedNode.title}</p>
+            <div className="flex gap-2 text-xs">
+              <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/60">Div: {selectedNode.division}</span>
+              <span className="px-3 py-1 rounded-full bg-apple-mint/20 border border-apple-mint/30 text-apple-mint">Active</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -1,0 +1,17 @@
+expansions:
+  - triggers: ["solar panel"]
+    expansion: "Terrestrial photovoltaic (PV) modules, crystalline silicon"
+  - triggers: ["rooftop solar"]
+    expansion: "Terrestrial photovoltaic (PV) modules, IS 14286"
+  - triggers: ["TMT bar", "saria", "sariya", "सरिया"]
+    expansion: "High strength deformed steel bars and wires for concrete reinforcement, IS 1786"
+  - triggers: ["cement"]
+    expansion: "Ordinary Portland Cement, Portland Pozzolana Cement, IS 269, IS 1489"
+  - triggers: ["electric wire", "house wire"]
+    expansion: "PVC insulated cables, IS 694"
+  - triggers: ["LED bulb", "LED light"]
+    expansion: "Self-ballasted LED lamps, IS 16102"
+  - triggers: ["steel pipe"]
+    expansion: "ERW steel tubes, IS 1239, IS 3589"
+  - triggers: ["street light", "स्ट्रीट लाइट"]
+    expansion: "LED luminaires for road and street lighting, IS 10322"

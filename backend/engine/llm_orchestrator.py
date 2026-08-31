@@ -4,11 +4,23 @@ import asyncio
 from typing import Any
 from backend.config.settings import app_settings
 from backend.engine.llm_interface import BaseLlmProvider
-from backend.engine.llm_providers import DeterministicFallbackProvider, GeminiLlmProvider, LocalGgufLlmProvider, OpenAiLlmProvider
+from backend.engine.llm_providers import (
+    DeterministicFallbackProvider, GeminiLlmProvider, LocalGgufLlmProvider, OpenAiLlmProvider, OpenRouterLlmProvider
+)
+from backend.engine.prompts import MASTER_SYSTEM_PROMPT, format_evaluation_prompt
 from backend.logger.app_logger import get_logger
 from backend.models.llm_contracts import LlmInputContract, LlmStandardizedResponse
 
 logger = get_logger("engine.llm_orchestrator")
+
+
+def _get_default_cloud_provider() -> BaseLlmProvider:
+    prov = app_settings.llm.provider.lower()
+    if prov in ("local", "local_gguf", "gguf"):
+        return LocalGgufLlmProvider()
+    if prov in ("openrouter", "open_router"):
+        return OpenRouterLlmProvider()
+    return GeminiLlmProvider() if prov == "gemini" else OpenAiLlmProvider()
 
 
 class LlmOrchestrator:
@@ -22,23 +34,18 @@ class LlmOrchestrator:
         cloud_provider: BaseLlmProvider | None = None,
         local_provider: BaseLlmProvider | None = None,
     ) -> None:
-        c_prov = cloud or cloud_provider
-        l_prov = local or local_provider
-        self._cloud = c_prov or (GeminiLlmProvider() if app_settings.llm.provider == "gemini" else OpenAiLlmProvider())
-        self._local = l_prov or LocalGgufLlmProvider()
+        self._cloud = cloud or cloud_provider or _get_default_cloud_provider()
+        self._local = local or local_provider or LocalGgufLlmProvider()
         self._fallback = DeterministicFallbackProvider()
         self._timeout_sec = timeout_sec
 
     def _build_prompt(self, c: LlmInputContract) -> tuple[str, str]:
-        sys_p = c.system_instruction or "You are a Senior BIS Procurement Technical Advisor."
+        sys_p = c.system_instruction or MASTER_SYSTEM_PROMPT
         top_s = c.candidate_standards[0] if c.candidate_standards else None
-        code = f"{top_s.is_code}:{top_s.year} - {top_s.title}" if top_s else "General Indian Standards"
-        chunk_lines = [f"- [Source: {k.get('file_name', 'Doc')}, Page {k.get('page_number', 1)}]: {k.get('snippet', '')[:180]}" for k in c.document_chunks[:3]]
-        chunk_txt = ("\nDocument Excerpts:\n" + "\n".join(chunk_lines)) if chunk_lines else ""
-        user_p = (
-            f"User Query: {c.query}\nSpecification: {c.extracted_text[:300]}\n"
-            f"Candidate Standard: {code}\nScope: {top_s.scope if top_s else ''}\n"
-            f"QCO Requirements: {c.qco_alert}{chunk_txt}\nGenerate technical justification and cite clauses."
+        user_p = format_evaluation_prompt(
+            query=c.query, standard=top_s, qco_alert=c.qco_alert,
+            document_chunks=c.document_chunks, image_context=c.image_context,
+            detected_language=c.detected_language,
         )
         return sys_p, user_p
 
@@ -58,11 +65,10 @@ class LlmOrchestrator:
         )
 
     async def execute(self, contract: LlmInputContract) -> LlmStandardizedResponse:
-        """Execute Cloud-First inference with automatic failover to Local GGUF and Deterministic tier."""
-        sys_prompt, user_prompt = self._build_prompt(contract)
+        sys_p, user_p = self._build_prompt(contract)
         try:
             logger.info(f"LLM Orchestrator: Invoking Primary Cloud LLM ({self._cloud.__class__.__name__})...")
-            raw = await asyncio.wait_for(self._cloud.generate_text(user_prompt, sys_prompt), timeout=self._timeout_sec)
+            raw = await asyncio.wait_for(self._cloud.generate_text(user_p, sys_p), timeout=self._timeout_sec)
             if raw and len(raw.strip()) > 20:
                 return self._synthesize(contract, raw, tier="cloud")
         except (asyncio.TimeoutError, OSError, ValueError, Exception) as exc:
@@ -70,7 +76,7 @@ class LlmOrchestrator:
 
         try:
             logger.info(f"LLM Orchestrator: Invoking Local GGUF Provider ({self._local.__class__.__name__})...")
-            local_raw = await self._local.generate_text(user_prompt, sys_prompt)
+            local_raw = await self._local.generate_text(user_p, sys_p)
             if local_raw and len(local_raw.strip()) > 20:
                 return self._synthesize(contract, local_raw, tier="local_fallback")
         except (RuntimeError, OSError, ValueError, Exception) as exc:
@@ -87,6 +93,3 @@ class LlmOrchestrator:
             cited_clauses=[f"{k.get('file_name', 'Doc')} (Page {k.get('page_number', 1)})" for k in contract.document_chunks[:3]],
             confidence_score=0.0, source_tier="unavailable",
         )
-
-
-

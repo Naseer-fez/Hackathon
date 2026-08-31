@@ -50,19 +50,34 @@ def test_get_llm_provider_local_aliases() -> None:
 
 def test_local_gguf_provider_context_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test graceful multi-tier fallback when higher context size fails."""
-    provider = LocalGgufLlmProvider(model_path="d:/dummy/path.gguf", n_ctx=2048)
+    provider = LocalGgufLlmProvider(model_path="d:/dummy/path.gguf", n_ctx=8192)
     monkeypatch.setattr("pathlib.Path.exists", lambda _: True)
     attempts: list[int] = []
 
-    def mock_init(self: LocalGgufLlmProvider, ctx: int) -> MagicMock:
+    def mock_init(self: LocalGgufLlmProvider, ctx: int, gpu_layers: int | None = None) -> MagicMock:
         attempts.append(ctx)
-        if ctx == 2048:
-            raise ValueError("OOM at 2048")
+        if ctx == 8192:
+            raise ValueError("OOM at 8192")
         return MagicMock()
 
     monkeypatch.setattr(LocalGgufLlmProvider, "_init_llama_instance", mock_init)
     assert provider._load_model() is not None
-    assert attempts == [2048, 1024]
+    assert attempts == [8192, 4096]
+
+
+@pytest.mark.asyncio
+async def test_local_gguf_streaming_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test LocalGgufLlmProvider stream generation without StopIteration errors."""
+    provider = LocalGgufLlmProvider()
+    mock_model = MagicMock()
+    mock_model.create_chat_completion.return_value = iter([
+        {"choices": [{"delta": {"content": "Chunk 1 "}}]},
+        {"choices": [{"delta": {"content": "Chunk 2"}}]},
+    ])
+    monkeypatch.setattr(provider, "_model", mock_model)
+    chunks = [c async for c in provider.generate_text_stream("Stream prompt")]
+    assert "".join(chunks) == "Chunk 1 Chunk 2"
+
 
 
 @pytest.mark.asyncio

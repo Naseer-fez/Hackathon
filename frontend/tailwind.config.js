@@ -7,6 +7,16 @@ export default {
   theme: {
     extend: {
       colors: {
+        apple: {
+          blue: "#0071E3",
+          mint: "#30D158",
+          amber: "#FF9F0A",
+          red: "#FF453A",
+          indigo: "#5E5CE6",
+          bg: "#08090a",
+          glass: "rgba(255, 255, 255, 0.04)",
+          glassDark: "rgba(0, 0, 0, 0.4)",
+        },
         bis: {
           navy: "#0a192f",
           blue: "#1e3a8a",
