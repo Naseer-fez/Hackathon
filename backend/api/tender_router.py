@@ -1,6 +1,6 @@
 """Router for tender document parsing and compliance auditing."""
 from __future__ import annotations
-
+import asyncio
 from pathlib import Path
 from fastapi import APIRouter, File, Form, UploadFile
 from backend.config.settings import app_settings
@@ -38,19 +38,21 @@ async def analyze_tender(
         upload_dir.mkdir(parents=True, exist_ok=True)
         dest_path = upload_dir / file.filename
         content = await file.read()
-        with open(dest_path, "wb") as f:
-            f.write(content)
-        text_content = doc_parser.extract_text_from_file(dest_path)
+        def write_file():
+            with open(dest_path, "wb") as f:
+                f.write(content)
+        await asyncio.to_thread(write_file)
+        text_content = await asyncio.to_thread(doc_parser.extract_text_from_file, dest_path)
     elif raw_text:
         text_content = raw_text
 
-    items = extractor.split_into_items(text_content)
-    issues = extractor.identify_compliance_issues(items)
+    items = await asyncio.to_thread(extractor.split_into_items, text_content)
+    issues = await asyncio.to_thread(extractor.identify_compliance_issues, items)
     generated_clauses: list[str] = []
 
     for item in items:
         query = f"{item.product_title} {item.spec_summary}"
-        matches = retriever.search(query=query, top_k=2)
+        matches = await asyncio.to_thread(retriever.search, query=query, top_k=2)
         recs: list[StandardRecommendation] = []
         for std, score, reasons in matches:
             allied = resolver.resolve_allied(std)

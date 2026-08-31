@@ -22,6 +22,7 @@ class StorageSettings(BaseModel):
     standards_file: str = "d:/CODE/Hackathon/backend/data/standards_database.json"
     qco_file: str = "d:/CODE/Hackathon/backend/data/qco_registry.json"
     upload_dir: str = "d:/CODE/Hackathon/backend/data/uploads"
+    rag_golden_dataset: str = "d:/CODE/Hackathon/backend/data/rag_golden_dataset.json"
 
 
 class AiEngineSettings(BaseModel):
@@ -37,19 +38,19 @@ class AiEngineSettings(BaseModel):
 
 
 class LlmSettings(BaseModel):
-    provider: str = "openrouter"
-    model_name: str = "nvidia/nemotron-3.5-lightning:free"
-    model_path: str = "d:/CODE/Hackathon/llm/gemma-2-2b-it-Q4_K_M.gguf"
+    provider: str = "local_gguf"
+    model_name: str = "Qwen2.5-7B-Instruct-Q4_K_M"
+    model_path: str = "d:/CODE/Hackathon/llm/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
     n_ctx: int = 4096
     n_threads: int = 4
-    n_gpu_layers: int = 99
-    chat_format: str = "gemma"
+    n_gpu_layers: int = 24
+    chat_format: str = "chatml"
     api_key_env_var: str = "GEMINI_API_KEY"
     openrouter_api_key_env_var: str = "OPENROUTER_API_KEY"
     temperature: float = 0.2
     max_tokens: int = 2048
-    enable_grammar: bool = False
-    grammar_file: str = ""
+    enable_grammar: bool = True
+    grammar_file: str = "d:/CODE/Hackathon/backend/engine/grammars/bis_output.gbnf"
     max_queue_size: int = 5
 
 

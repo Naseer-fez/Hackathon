@@ -31,7 +31,12 @@ def run_indexing(recreate: bool = False, limit: int | None = None) -> int:
 def execute_query(query: str, mandatory: bool | None = None, top_k: int = 3) -> None:
     """Search and display results for a single query."""
     print(f"\nQuery: '{query}' | Mandatory Only: {mandatory}")
-    results = search_standards(query_text=query, status_filter="Active", mandatory_only=mandatory, top_k=top_k)
+    # search_standards API does not support status or mandatory filtering directly.
+    # We fetch more results and apply trivial local post-filtering.
+    results = search_standards(query_text=query, top_k=top_k * 5)
+    if mandatory is not None:
+        results = [r for r in results if r.get("mandatory") == mandatory]
+    results = results[:top_k]
     for rank, res in enumerate(results, 1):
         print(f"  #{rank} [{res['similarity_score']:.4f}] {res['standard_id']} - {res['product_category']}")
         print(f"      Mandatory: {res['mandatory']} | Scheme: {res['bis_scheme']} | QCO: {res['qco_order_title']}")

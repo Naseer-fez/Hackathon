@@ -34,8 +34,14 @@ class EmbeddingService:
 
         # 2. Attempt using SentenceTransformer
         try:
+            import torch
             from sentence_transformers import SentenceTransformer
-            self.st_model = SentenceTransformer(self.model_name)
+            
+            device = "cuda:0" if torch.cuda.is_available() else None
+            if device is None:
+                raise RuntimeError("CUDA is required for this embedding pipeline.")
+            
+            self.st_model = SentenceTransformer(self.model_name, device=device)
             self.dimension = self.st_model.get_sentence_embedding_dimension()
             self.engine = "sentence_transformers"
             logger.info(f"Initialized SentenceTransformer '{self.model_name}'. Dimension: {self.dimension}")

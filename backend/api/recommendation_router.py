@@ -1,5 +1,6 @@
 """Router for AI standard recommendations and dual-index search queries."""
 from __future__ import annotations
+import asyncio
 import time
 from fastapi import APIRouter
 from backend.engine.certification_advisor import CertificationAdvisor
@@ -21,9 +22,9 @@ clause_gen = TenderClauseGenerator()
 async def get_recommendations(req: RecommendationRequest) -> RecommendationResponse:
     """Recommend most relevant Indian Standards and grounded PDF document chunk evidences."""
     start_time = time.perf_counter()
-    expanded_query, detected_lang = multilingual_proc.translate_and_expand(req.query)
-    raw_matches, evidences = retriever.search_with_evidence(
-        query=expanded_query, division=req.division, top_k=req.top_k, top_k_chunks=5
+    expanded_query, detected_lang = await asyncio.to_thread(multilingual_proc.translate_and_expand, req.query)
+    raw_matches, evidences = await asyncio.to_thread(
+        retriever.search_with_evidence, expanded_query, req.division, req.top_k, 5
     )
 
     recommendations: list[StandardRecommendation] = []

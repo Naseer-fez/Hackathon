@@ -13,14 +13,22 @@ class TaxonomyEnricher:
         repo_path = source_repo_path or vector_db_settings.source_repo_path
         if repo_path not in sys.path:
             sys.path.insert(0, repo_path)
-        from src.taxonomy.normalizer import TaxonomyNormalizer
-        from src.taxonomy.indic_dictionary import IndicDictionary
+        try:
+            from src.taxonomy.normalizer import TaxonomyNormalizer
+            from src.taxonomy.indic_dictionary import IndicDictionary
+            self.external_taxonomy_available = True
+        except (ImportError, ModuleNotFoundError):
+            TaxonomyNormalizer = None
+            IndicDictionary = None
+            self.external_taxonomy_available = False
 
-        self._normalizer = TaxonomyNormalizer()
-        self._indic_dict = IndicDictionary()
+        self._normalizer = TaxonomyNormalizer() if self.external_taxonomy_available else None
+        self._indic_dict = IndicDictionary() if self.external_taxonomy_available else None
 
     def get_abbreviations_for_text(self, text: str) -> list[str]:
         """Find matching domain abbreviations in text and return expansions."""
+        if not self.external_taxonomy_available:
+            return []
         text_upper = text.upper()
         found: list[str] = []
         for abbr, model in self._normalizer._abbreviations.items():
@@ -30,6 +38,8 @@ class TaxonomyEnricher:
 
     def get_trade_terms_for_standard(self, is_number: str) -> list[str]:
         """Find colloquial trade terms mapped to this standard."""
+        if not self.external_taxonomy_available:
+            return []
         norm_is = is_number.upper().strip()
         matched: list[str] = []
         for trade_key, item in self._normalizer._trade_terms.items():
@@ -39,6 +49,8 @@ class TaxonomyEnricher:
 
     def get_indic_terms_for_standard(self, is_number: str) -> dict[str, Any]:
         """Fetch 10-language translations, transliterations, and slang for standard."""
+        if not self.external_taxonomy_available:
+            return {"scripts": {}, "transliterations": {}, "slang": [], "synonyms": []}
         entry = self._indic_dict._entries_by_std.get(is_number)
         if not entry:
             for k, v in self._indic_dict._entries_by_std.items():

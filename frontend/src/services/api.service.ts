@@ -115,10 +115,36 @@ export async function explainStandardStream(
   if (!res.ok || !res.body) throw new Error("Failed to stream explanation");
   const reader = res.body.getReader();
   const decoder = new TextDecoder("utf-8");
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    onChunk(decoder.decode(value, { stream: true }));
+  let buffer = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (value) {
+        buffer += decoder.decode(value, { stream: true });
+      }
+      
+      const events = buffer.split(/\r?\n\r?\n/);
+      if (done) {
+        buffer = "";
+      } else {
+        buffer = events.pop() || "";
+      }
+
+      for (const event of events) {
+        if (!event.trim()) continue;
+        for (const line of event.split(/\r?\n/)) {
+          if (line.startsWith("data:")) {
+            const data = line.startsWith("data: ") ? line.slice(6) : line.slice(5);
+            if (data === "[DONE]") return;
+            if (data.startsWith("[ERROR:")) throw new Error(data);
+            onChunk(data);
+          }
+        }
+      }
+      if (done) break;
+    }
+  } finally {
+    reader.releaseLock();
   }
 }
 
@@ -148,10 +174,36 @@ export async function askProcurementAssistantStream(
   if (!res.ok || !res.body) throw new Error("Assistant stream request failed");
   const reader = res.body.getReader();
   const decoder = new TextDecoder("utf-8");
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    onChunk(decoder.decode(value, { stream: true }));
+  let buffer = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (value) {
+        buffer += decoder.decode(value, { stream: true });
+      }
+      
+      const events = buffer.split(/\r?\n\r?\n/);
+      if (done) {
+        buffer = "";
+      } else {
+        buffer = events.pop() || "";
+      }
+
+      for (const event of events) {
+        if (!event.trim()) continue;
+        for (const line of event.split(/\r?\n/)) {
+          if (line.startsWith("data:")) {
+            const data = line.startsWith("data: ") ? line.slice(6) : line.slice(5);
+            if (data === "[DONE]") return;
+            if (data.startsWith("[ERROR:")) throw new Error(data);
+            onChunk(data);
+          }
+        }
+      }
+      if (done) break;
+    }
+  } finally {
+    reader.releaseLock();
   }
 }
 

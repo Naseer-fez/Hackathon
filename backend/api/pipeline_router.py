@@ -1,6 +1,7 @@
 """FastAPI router for unified multi-modal pipeline, local voice I/O, and image classification."""
 from __future__ import annotations
 
+import asyncio
 import io
 from fastapi import APIRouter, File, Form, Response, UploadFile
 from pydantic import BaseModel
@@ -53,14 +54,14 @@ async def process_pipeline(
 async def transcribe_voice(audio_file: UploadFile = File(...)) -> VoiceTranscriptionResponse:
     """Transcribe uploaded audio file to text locally without external APIs."""
     audio_bytes = await audio_file.read()
-    text = voice_service.transcribe_audio(audio_bytes, filename=audio_file.filename or "audio.wav")
+    text = await asyncio.to_thread(voice_service.transcribe_audio, audio_bytes, audio_file.filename or "audio.wav")
     return VoiceTranscriptionResponse(transcribed_text=text)
 
 
 @router.post("/voice/synthesize")
 async def synthesize_voice(req: TextToSpeechRequest) -> Response:
     """Synthesize text into WAV audio bytes locally without external APIs."""
-    wav_bytes = voice_service.synthesize_speech(req.text)
+    wav_bytes = await asyncio.to_thread(voice_service.synthesize_speech, req.text)
     return Response(content=wav_bytes, media_type="audio/wav")
 
 
@@ -68,4 +69,4 @@ async def synthesize_voice(req: TextToSpeechRequest) -> Response:
 async def classify_image(image_file: UploadFile = File(...)) -> ImageClassificationResult:
     """Classify technical drawings, spec sheets, and product images locally."""
     img_bytes = await image_file.read()
-    return image_classifier.classify(img_bytes)
+    return await asyncio.to_thread(image_classifier.classify, img_bytes)
