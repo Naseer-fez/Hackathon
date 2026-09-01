@@ -63,3 +63,11 @@ logging:
   level: "INFO"
   rotation_max_bytes: 10485760
   backup_count: 5
+
+vector_database:
+  active_db: "old" # Options: "old" or "final"
+  final_db_path: "D:\\Extras\\ES\\Final_Vector_DB"
+  old_db_1_path: "D:\\Extras\\ES\\Old_DB_1"
+  old_db_2_path: "D:\\Extras\\ES\\Old_DB_2"
+  bis_data_path: "D:\\Extras\\ES\\Scrapiing\\Version2\\Final Data"
+  collection_name: "bis_standards_collection"

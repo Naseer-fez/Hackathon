@@ -36,7 +36,8 @@ class LocalGgufLlmProvider(BaseLlmProvider):
         self._n_gpu_layers = n_gpu_layers if n_gpu_layers is not None else app_settings.llm.n_gpu_layers
         self._chat_format = chat_format or app_settings.llm.chat_format
         self._model = None
-        self._lock = threading.Lock()  # startup-only (preload/warmup)
+        self._lock = threading.RLock()  # re-entrant startup lock (preload/warmup)
+
         self._semaphore: asyncio.Semaphore = asyncio.Semaphore(1)
         self._queue_count: int = 0
         self._max_queue: int = app_settings.llm.max_queue_size
@@ -79,9 +80,10 @@ class LocalGgufLlmProvider(BaseLlmProvider):
         for ctx_cand, gpu_cand in configs:
             try:
                 return self._init_llama_instance(ctx_cand, gpu_cand)
-            except (ValueError, RuntimeError, TypeError, OSError) as exc:
+            except (ValueError, RuntimeError, TypeError, OSError, ImportError, ModuleNotFoundError) as exc:
                 logger.warning(f"Local GGUF: Load failed (ctx={ctx_cand}, gpu={gpu_cand}): {exc}")
         return None
+
 
     def preload(self) -> bool:
         with self._lock:

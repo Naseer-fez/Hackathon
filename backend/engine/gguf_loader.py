@@ -39,7 +39,8 @@ def load_gguf_model(
     for ctx_cand, gpu_cand in configs:
         try:
             return instantiate_llama(model_path, ctx_cand, n_threads, gpu_cand, chat_format)
-        except (ValueError, RuntimeError, OSError) as exc:
+        except (ValueError, RuntimeError, TypeError, OSError, ImportError, ModuleNotFoundError) as exc:
             gc.collect()
             logger.warning(f"Local GGUF: Load failed (ctx={ctx_cand}, gpu={gpu_cand}): {exc}")
     return None
+

@@ -1,0 +1,37 @@
+Project Report: Smart Standards Recommendation System
+
+1. Introduction
+When government departments or private companies buy products, they need to make sure everything follows the correct quality rules. In India, these are the Indian Standards. But finding the exact rules for a specific item is actually really hard. The rule documents are huge, and a single product might need testing rules from several different places. For example, buying a simple solar panel isn't just about one rule; it involves safety tests, material quality, and installation guidelines. 
+
+Because of this complexity, tender documents often have mistakes. People might accidentally use old, canceled standards or miss important mandatory quality checks. This causes poor quality products to be bought, wastes public money, and creates legal headaches when the purchased items fail to work properly or pose safety risks.
+
+2. The Problem Statement
+The main issue is that people who write procurement tenders struggle to find and apply the correct standards. Procurement officers are experts in purchasing, not necessarily engineers or standards experts. Yet, they are expected to navigate a massive maze of technical documents. 
+
+It takes way too much time to read through hundreds of complex PDFs just to figure out which safety rules apply to things like street lights, building materials, or office equipment. Often, a standard will reference another standard, which references another one, creating a confusing chain. There is a strong need for a system that can automatically give users the exact, up-to-date rules so they can easily include them in their tender documents, without needing to be experts. The current manual process is slow, prone to human error, and risky.
+
+3. The Proposed Solution Idea
+The general idea to fix this problem is to build a smart search tool that understands what a user wants, even if they don't know the proper technical names. Instead of a person manually reading through books of rules, they could just type the everyday name of the product they are trying to buy. 
+
+The system would then look through the standards database and instantly pull out the required rules, testing methods, and quality orders. It would act like a bridge between complex engineering documents and everyday procurement tasks. This approach gives the user a ready-to-use checklist to drop straight into their tender document. By automating the discovery part, we take the heavy lifting off the user's shoulders.
+
+4. Our Solution and How It Solves the Problem
+We built an intelligent platform that acts like a personal assistant for buyers and procurement officers. We designed it specifically to be simple on the outside while handling all the technical complexity in the background.
+
+Here is how our system works to solve the problem:
+
+First, it saves a massive amount of time and cuts down on human errors. What normally takes days of hunting through documents now takes seconds. A user just types what they need—like "steel pipes for plumbing"—and our system finds the exact standard. It doesn't just give a document title; it reads the document and tells the user the exact paragraphs or clauses they need to care about. This level of detail used to require a technical consultant, but now it is instant.
+
+Second, it ensures full legal compliance and prevents bad purchases. Our system strictly checks for mandatory government quality orders (like when the government says a product MUST have a specific safety mark). By guaranteeing that tenders only ask for the correct standards, our tool stops poor quality goods from slipping through. If a tender is written perfectly, suppliers can't deliver substandard items. Ultimately, this protects public safety and saves public money from being wasted on faulty products.
+
+5. Handling Deprecation and Outdated Rules
+A major challenge in procurement is that standard rules change all the time. Sometimes an old rule is completely removed (deprecated), or it is replaced by a newer version (superseded). When buyers accidentally include a deprecated standard in a tender, it creates huge legal vulnerabilities, because the supplier might deliver a product built to an outdated safety level. 
+
+To solve this, our system automatically runs deprecation checks. If a user searches for a product or uploads a draft document that references a canceled standard, the system instantly flags it with a clear warning. It acts as an automatic auditor, swapping out the deprecated rule for the current, active one. This ensures buyers never use outdated information and are always fully protected by the latest regulations.
+
+6. Future Scope of the Project
+Looking ahead after the completion of this hackathon, there are several exciting ways to expand this project to make an even bigger impact. 
+
+First, we plan on integrating the tool directly with major government tender portals. Instead of being a separate tool, it could work right inside the portal where people are already typing up their tenders, automating the whole process from start to finish. 
+
+Second, we want to expand language and database support. We aim to add more regional languages so that users from any state can search for standards in their native tongue. Additionally, we plan to include international standards databases, allowing the system to handle global procurement rules. This will turn our solution into a universal tool for safe and efficient purchasing.
