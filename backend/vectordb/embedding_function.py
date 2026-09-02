@@ -7,6 +7,7 @@ import time
 from typing import Any
 import numpy as np
 from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
+from backend.config.paths import EMBEDDING_MODEL_PATH
 from backend.logger.app_logger import get_logger
 
 logger = get_logger("vectordb.embedding")
@@ -17,8 +18,9 @@ _SHARED_LOCK = threading.Lock()
 class SentenceTransformerEmbeddingFunction(EmbeddingFunction[Documents]):
     """Dense embeddings using shared SentenceTransformers or neural hashing fallback."""
 
-    def __init__(self, model_name: str = "d:/CODE/Hackathon/llm/all-MiniLM-L6-v2", dim: int = 384) -> None:
-        self._model_name, self._dim, self._model, self._offline = model_name, dim, None, False
+    def __init__(self, model_name: str | None = None, dim: int = 384) -> None:
+        self._model_name = model_name or str(EMBEDDING_MODEL_PATH)
+        self._dim, self._model, self._offline = dim, None, False
 
     @classmethod
     def name(cls) -> str:
@@ -29,7 +31,7 @@ class SentenceTransformerEmbeddingFunction(EmbeddingFunction[Documents]):
 
     @classmethod
     def build_from_config(cls, config: dict[str, Any]) -> SentenceTransformerEmbeddingFunction:
-        return cls(model_name=config.get("model_name", "d:/CODE/Hackathon/llm/all-MiniLM-L6-v2"), dim=config.get("dim", 384))
+        return cls(model_name=config.get("model_name", str(EMBEDDING_MODEL_PATH)), dim=config.get("dim", 384))
 
     def _load_model(self) -> None:
         if self._model is not None or self._offline:

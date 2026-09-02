@@ -1,7 +1,7 @@
 """Unit tests for configuration loader and settings."""
 from __future__ import annotations
 
-from pathlib import Path
+from backend.config.paths import CONFIG_YAML_PATH
 from backend.config.settings import AppSettings, load_settings
 
 
@@ -15,8 +15,7 @@ def test_load_settings_default() -> None:
 
 def test_load_settings_from_real_yaml() -> None:
     """Test loading configuration from existing config.yaml."""
-    yaml_path = Path("d:/CODE/Hackathon/backend/config/config.yaml")
-    settings = load_settings(yaml_path)
+    settings = load_settings(CONFIG_YAML_PATH)
     assert settings.server.log_level == "INFO"
     assert settings.ai_engine.top_k_recommendations == 5
     assert settings.llm.provider in ["openrouter", "local_gguf"]

@@ -15,7 +15,7 @@ logger = get_logger("engine.voice_service")
 
 
 class VoiceService:
-    """Local offline voice processor using models stored in D:/CODE/Hackathon/llm/."""
+    """Local offline voice processor using models stored in the configured LLM directory."""
 
     def __init__(self) -> None:
         self._multilingual = MultilingualProcessor()

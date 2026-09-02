@@ -12,7 +12,7 @@ from backend.models.standard_model import IndianStandard, StandardStatus
 @pytest.mark.asyncio
 async def test_local_gguf_provider_fallback_offline() -> None:
     """Test LocalGgufLlmProvider reports offline status when file does not exist."""
-    provider = LocalGgufLlmProvider(model_path="d:/non_existent/path/model.gguf", n_ctx=2048, n_threads=2)
+    provider = LocalGgufLlmProvider(model_path="non_existent/path/model.gguf", n_ctx=2048, n_threads=2)
     result = await provider.generate_text("Explain IS 1786 rebar requirements")
     assert isinstance(result, str) and "No LLM model is currently available" in result
 
@@ -50,7 +50,7 @@ def test_get_llm_provider_local_aliases() -> None:
 
 def test_local_gguf_provider_context_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test graceful multi-tier fallback when higher context size fails."""
-    provider = LocalGgufLlmProvider(model_path="d:/dummy/path.gguf", n_ctx=8192)
+    provider = LocalGgufLlmProvider(model_path="dummy/path.gguf", n_ctx=8192)
     monkeypatch.setattr("pathlib.Path.exists", lambda _: True)
     attempts: list[int] = []
 

@@ -226,7 +226,8 @@ class TestGrammarInferenceFallback:
 class TestAsyncGeneration:
     """Verify async wrappers work correctly."""
 
-    def test_generate_text_returns_content(self, mock_settings: Any) -> None:
+    @pytest.mark.asyncio
+    async def test_generate_text_returns_content(self, mock_settings: Any) -> None:
         """generate_text() returns stripped content from the model."""
         _patched, _gbnf_path = mock_settings
         mock_model = MagicMock()
@@ -243,12 +244,11 @@ class TestAsyncGeneration:
         provider._queue_count = 0
         provider._max_queue = 5
 
-        result = asyncio.get_event_loop().run_until_complete(
-            provider.generate_text("test prompt", "system")
-        )
+        result = await provider.generate_text("test prompt", "system")
         assert result == "IS 1786:2008 is the standard for TMT bars."
 
-    def test_generate_text_stream_yields_chunks(self, mock_settings: Any) -> None:
+    @pytest.mark.asyncio
+    async def test_generate_text_stream_yields_chunks(self, mock_settings: Any) -> None:
         """generate_text_stream() yields each content chunk from the model."""
         _patched, _gbnf_path = mock_settings
         mock_model = MagicMock()
@@ -266,10 +266,7 @@ class TestAsyncGeneration:
         provider._queue_count = 0
         provider._max_queue = 5
 
-        async def collect() -> list[str]:
-            return [c async for c in provider.generate_text_stream("test", "sys")]
-
-        chunks = asyncio.get_event_loop().run_until_complete(collect())
+        chunks = [c async for c in provider.generate_text_stream("test", "sys")]
         combined = "".join(chunks)
         # Verify natural prose AND constrained IS code coexist
         assert "Natural English prose" in combined

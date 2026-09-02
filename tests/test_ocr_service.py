@@ -4,6 +4,7 @@ from __future__ import annotations
 import io
 from pathlib import Path
 from PIL import Image, ImageDraw
+from backend.config.paths import DATA_DIR
 from backend.parsers.document_parser import DocumentParser
 from backend.parsers.ocr_service import OcrService
 
@@ -27,7 +28,7 @@ def test_ocr_service_image_creation_and_extraction() -> None:
 def test_document_parser_image_support() -> None:
     """Test document parser extracting text from image file."""
     parser = DocumentParser()
-    tmp_img_path = Path("d:/CODE/Hackathon/backend/data/temp_test_ocr.png")
+    tmp_img_path = DATA_DIR / "temp_test_ocr.png"
 
     img = Image.new("RGB", (200, 80), color=(255, 255, 255))
     img.save(tmp_img_path)

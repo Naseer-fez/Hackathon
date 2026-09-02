@@ -48,16 +48,33 @@ class VectorDbIndexer:
         )
 
     def index_all(self, recreate: bool = False, limit: int | None = None) -> int:
-        """Load standards from master catalog, chunk, embed, and persist into ChromaDB."""
-        from src.corpus.catalog import MasterStandardsCatalog
-        from src.regulatory.qco_registry import QCORegistry
+        """Load standards from master catalog or internal database, chunk, embed, and persist into ChromaDB."""
+        all_standards = []
+        qco_fetcher = None
 
-        catalog = MasterStandardsCatalog(auto_load=False)
-        catalog.load_from_json(str(self.settings.standards_master_path))
-        qco_reg = QCORegistry()
+        try:
+            from src.corpus.catalog import MasterStandardsCatalog
+            from src.regulatory.qco_registry import QCORegistry
+
+            if self.settings.standards_master_path.exists():
+                catalog = MasterStandardsCatalog(auto_load=False)
+                catalog.load_from_json(str(self.settings.standards_master_path))
+                qco_reg = QCORegistry()
+                all_standards = catalog.list_all_standards()
+                qco_fetcher = lambda std_id: qco_reg.get_qco_for_standard(std_id)
+        except (ImportError, ModuleNotFoundError, Exception):
+            all_standards = []
+
+        if not all_standards:
+            from backend.ingestion.standards_loader import StandardsLoader
+            from backend.ingestion.qco_registry import QcoRegistry
+
+            loader = StandardsLoader()
+            qco_reg = QcoRegistry()
+            all_standards = loader.get_all_standards()
+            qco_fetcher = lambda std_id: qco_reg.get_qco_for_standard(std_id)
 
         collection = self.get_or_create_collection(recreate=recreate)
-        all_standards = catalog.list_all_standards()
         if limit:
             all_standards = all_standards[:limit]
 
@@ -68,7 +85,8 @@ class VectorDbIndexer:
         batch_size = self.settings.batch_size
 
         for std in all_standards:
-            qco = qco_reg.get_qco_for_standard(std.is_number or std.standard_id)
+            std_code = getattr(std, "is_code", None) or getattr(std, "is_number", None) or getattr(std, "standard_id", "")
+            qco = qco_fetcher(std_code) if qco_fetcher else None
             doc_text, chunk_id, metadata = self._chunker.build_chunk(std, qco)
             ids.append(chunk_id)
             docs.append(doc_text)

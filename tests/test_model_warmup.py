@@ -11,7 +11,7 @@ from backend.vectordb.embedding_function import SentenceTransformerEmbeddingFunc
 
 def test_local_gguf_preload_and_warmup(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test LocalGgufLlmProvider preload and warmup cycle."""
-    provider = LocalGgufLlmProvider(model_path="d:/dummy/path.gguf")
+    provider = LocalGgufLlmProvider(model_path="dummy/path.gguf")
     mock_llama = MagicMock()
     mock_llama.create_chat_completion.return_value = {"choices": [{"message": {"content": "OK"}}]}
 

@@ -1,8 +1,18 @@
 import os
+from pathlib import Path
 import yaml
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 import logging
+
+from backend.config.paths import (
+    CONFIG_YAML_PATH,
+    DATA_DIR,
+    EMBEDDING_MODEL_PATH,
+    PROJECT_ROOT,
+    VECTORDB_CHROMA_DIR,
+    VECTORDB_DIR,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,46 +25,44 @@ class DatabaseConfig(BaseModel):
     Reads from the centralized backend/config/config.yaml
     Allows seamless toggling between databases using the active_db flag in YAML.
     """
-    active_db: str = Field(default="old")
-    active_db_path: str = Field(default="D:\\Extras\\ES\\Final_Vector_DB")
-    old_db_1_path: str = Field(default="D:\\Extras\\ES\\Old_DB_1")
-    old_db_2_path: str = Field(default="D:\\Extras\\ES\\Old_DB_2")
-    bis_data_path: str = Field(default="D:\\Extras\\ES\\Scrapiing\\Version2\\Final Data")
+    active_db: str = Field(default="local")
+    active_db_path: str = Field(default=str(VECTORDB_CHROMA_DIR))
+    old_db_1_path: str = Field(default=str(VECTORDB_DIR))
+    old_db_2_path: str = Field(default=str(VECTORDB_DIR))
+    bis_data_path: str = Field(default=str(DATA_DIR))
     collection_name: str = Field(default="bis_standards_collection")
-    embedding_model: str = Field(default=os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2"))
+    embedding_model: str = Field(default=os.getenv("EMBEDDING_MODEL", str(EMBEDDING_MODEL_PATH)))
 
     @property
     def is_using_final_db(self) -> bool:
         """Check if we are pointing to the final vector DB."""
-        return self.active_db == "final"
+        return self.active_db in ("final", "local")
 
 def load_config() -> DatabaseConfig:
-    # Path to the main config.yaml
-    yaml_path = os.path.join(os.path.dirname(__file__), "..", "backend", "config", "config.yaml")
-    yaml_path = os.path.abspath(yaml_path)
-    
+    yaml_path = CONFIG_YAML_PATH
     cfg = DatabaseConfig()
-    if os.path.exists(yaml_path):
+    if yaml_path.exists():
         try:
             with open(yaml_path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
                 vd_config = data.get("vector_database", {})
                 
-                # Update Pydantic model fields based on yaml
                 cfg.active_db = vd_config.get("active_db", cfg.active_db)
                 
-                # Determine active path dynamically based on the active_db toggle
-                if cfg.active_db == "final":
-                    cfg.active_db_path = vd_config.get("final_db_path", cfg.active_db_path)
-                elif cfg.active_db == "old":
-                    # For legacy fallback, you may decide which legacy path is the 'primary' or handle them dynamically
-                    # We will default it to old_db_1_path as the active one in fallback mode, 
-                    # but the migrate script will still use both properties.
-                    cfg.active_db_path = vd_config.get("old_db_1_path", cfg.old_db_1_path)
+                final_path = vd_config.get("final_db_path", cfg.active_db_path)
+                old1_path = vd_config.get("old_db_1_path", cfg.old_db_1_path)
+                old2_path = vd_config.get("old_db_2_path", cfg.old_db_2_path)
+                bis_path = vd_config.get("bis_data_path", cfg.bis_data_path)
 
-                cfg.old_db_1_path = vd_config.get("old_db_1_path", cfg.old_db_1_path)
-                cfg.old_db_2_path = vd_config.get("old_db_2_path", cfg.old_db_2_path)
-                cfg.bis_data_path = vd_config.get("bis_data_path", cfg.bis_data_path)
+                def _resolve(p_str: str) -> str:
+                    if not os.path.isabs(p_str):
+                        return str(PROJECT_ROOT / p_str)
+                    return p_str
+
+                cfg.active_db_path = _resolve(final_path) if cfg.active_db in ("final", "local") else _resolve(old1_path)
+                cfg.old_db_1_path = _resolve(old1_path)
+                cfg.old_db_2_path = _resolve(old2_path)
+                cfg.bis_data_path = _resolve(bis_path)
                 cfg.collection_name = vd_config.get("collection_name", cfg.collection_name)
                 
             logger.info(f"Loaded vector_database config from {yaml_path}. Active DB Mode: {cfg.active_db}")

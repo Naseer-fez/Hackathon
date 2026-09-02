@@ -8,7 +8,7 @@ PROCESSED_DIR = DATA_DIR / "processed"
 CHROMA_DIR = DATA_DIR / "chroma"
 
 # Source dataset
-DATASET_PATH = r"D:\CODE\Hackathon__test\data\extracted_documents.csv"
+DATASET_PATH = Path(os.getenv("EXTRACTED_DOCUMENTS_DATASET", str(DATA_DIR / "extracted_documents.csv")))
 
 # ChromaDB Settings
 COLLECTION_NAME = "document_chunks"

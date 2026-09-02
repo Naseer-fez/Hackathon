@@ -10,26 +10,26 @@ server:
     - "*"
 
 storage:
-  data_dir: "d:/CODE/Hackathon/backend/data"
-  standards_file: "d:/CODE/Hackathon/backend/data/standards_database.json"
-  qco_file: "d:/CODE/Hackathon/backend/data/qco_registry.json"
-  upload_dir: "d:/CODE/Hackathon/backend/data/uploads"
+  data_dir: "backend/data"
+  standards_file: "backend/data/standards_database.json"
+  qco_file: "backend/data/qco_registry.json"
+  upload_dir: "backend/data/uploads"
 
 ai_engine:
-  embedding_model_name: "d:/CODE/Hackathon/llm/all-MiniLM-L6-v2"
+  embedding_model_name: "llm/all-MiniLM-L6-v2"
   multilingual_model_name: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
   similarity_threshold: 0.35
   top_k_recommendations: 5
   hybrid_alpha: 0.65
   enable_gpu: true
-  reranker_model: "d:/CODE/Hackathon/llm/bge-reranker-small"
+  reranker_model: "llm/bge-reranker-small"
   reranker_candidate_pool: 25
-  domain_expansions_file: "d:/CODE/Hackathon/backend/config/domain_expansions.yaml"
+  domain_expansions_file: "backend/config/domain_expansions.yaml"
 
 llm:
   provider: "local_gguf"
   model_name: "Qwen2.5-7B-Instruct-Q4_K_M"
-  model_path: "d:/CODE/Hackathon/llm/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
+  model_path: "llm/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
   n_ctx: 4096
   n_threads: 4
   n_gpu_layers: 24
@@ -39,17 +39,17 @@ llm:
   temperature: 0.2
   max_tokens: 2048
   enable_grammar: true
-  grammar_file: "d:/CODE/Hackathon/backend/engine/grammars/bis_output.gbnf"
+  grammar_file: "backend/engine/grammars/bis_output.gbnf"
   max_queue_size: 5
 
 cache:
-  sqlite_db_path: "d:/CODE/Hackathon/backend/data/semantic_cache.db"
+  sqlite_db_path: "backend/data/semantic_cache.db"
   similarity_threshold: 0.95
 
 voice:
-  stt_model_path: "d:/CODE/Hackathon/llm/faster-whisper-tiny"
-  tts_eng_model_path: "d:/CODE/Hackathon/llm/mms-tts-eng"
-  tts_hin_model_path: "d:/CODE/Hackathon/llm/mms-tts-hin"
+  stt_model_path: "llm/faster-whisper-tiny"
+  tts_eng_model_path: "llm/mms-tts-eng"
+  tts_hin_model_path: "llm/mms-tts-hin"
 
 bis_scraper:
   base_url: "https://www.services.bis.gov.in/php/BIS_2.0/bisconnect/knowyourstandards/indian_standards/isdetails"
@@ -58,16 +58,21 @@ bis_scraper:
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
 logging:
-  log_dir: "d:/CODE/Hackathon/backend/logs"
-  log_file: "d:/CODE/Hackathon/backend/logs/backend.log"
+  log_dir: "backend/logs"
+  log_file: "backend/logs/backend.log"
   level: "INFO"
   rotation_max_bytes: 10485760
   backup_count: 5
 
 vector_database:
-  active_db: "old" # Options: "old" or "final"
-  final_db_path: "D:\\Extras\\ES\\Final_Vector_DB"
-  old_db_1_path: "D:\\Extras\\ES\\Old_DB_1"
-  old_db_2_path: "D:\\Extras\\ES\\Old_DB_2"
-  bis_data_path: "D:\\Extras\\ES\\Scrapiing\\Version2\\Final Data"
+  active_db: "local" # Options: "local" or "source"
+  final_db_path: "vectordb/data/chroma"
+  old_db_1_path: "vectordb"
+  old_db_2_path: "vectordb"
+  bis_data_path: "backend/data"
   collection_name: "bis_standards_collection"
+
+distributed_reasoning:
+  mac_available: false
+  mac_endpoint: "http://localhost:5000/reason"
+  local_preprocessor_model: "llm/gemma-2b.gguf"

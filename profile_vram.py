@@ -7,8 +7,10 @@ from typing import List, Dict, Any, Optional
 from llama_cpp import Llama
 from sentence_transformers import SentenceTransformer
 
-MODEL_PATH = "d:/CODE/Hackathon/llm/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
-EMBEDDING_MODEL_PATH = "d:/CODE/Hackathon/llm/all-MiniLM-L6-v2"
+from backend.config.paths import DEFAULT_GGUF_MODEL_PATH, EMBEDDING_MODEL_PATH
+
+MODEL_PATH = str(DEFAULT_GGUF_MODEL_PATH)
+EMBEDDING_MODEL_PATH = str(EMBEDDING_MODEL_PATH)
 PROMPT = "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\nWrite a long essay about the history of artificial intelligence.<|im_end|>\n<|im_start|>assistant\n"
 
 

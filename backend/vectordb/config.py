@@ -5,13 +5,20 @@ import os
 from pathlib import Path
 from pydantic import BaseModel, Field
 
+from backend.config.paths import (
+    EMBEDDING_MODEL_PATH,
+    PROJECT_ROOT,
+    VECTORDB_CHROMA_DIR,
+    VECTORDB_DIR,
+)
+
 
 class VectorDbSettings(BaseModel):
     """Configuration parameters for ChromaDB and embedding models."""
 
     # Store 1: Catalog Metadata Store
     catalog_db_path: str = Field(
-        default_factory=lambda: os.getenv("VECTORDB_PATH", "D:/CODE/Hackathon/vectordb")
+        default_factory=lambda: os.getenv("VECTORDB_PATH", str(VECTORDB_DIR))
     )
     catalog_collection_name: str = Field(
         default_factory=lambda: os.getenv("VECTORDB_COLLECTION", "bis_standards_catalog")
@@ -19,7 +26,7 @@ class VectorDbSettings(BaseModel):
 
     # Store 2: Granular PDF Document Chunks Store
     document_db_path: str = Field(
-        default_factory=lambda: os.getenv("DOCUMENT_VECTORDB_PATH", "D:/CODE/Hackathon/vectordb/data/chroma")
+        default_factory=lambda: os.getenv("DOCUMENT_VECTORDB_PATH", str(VECTORDB_CHROMA_DIR))
     )
     document_collection_name: str = Field(
         default_factory=lambda: os.getenv("DOCUMENT_VECTORDB_COLLECTION", "document_chunks")
@@ -27,13 +34,13 @@ class VectorDbSettings(BaseModel):
     source_repo_path: str = Field(
         default_factory=lambda: os.getenv(
             "SOURCE_REPO_PATH",
-            "D:/Extras/ES/Scrapiing/teamwork_is_knowledge_base",
+            str(PROJECT_ROOT / "data" / "knowledge_base"),
         )
     )
     embedding_model_name: str = Field(
         default_factory=lambda: os.getenv(
             "VECTORDB_EMBEDDING_MODEL",
-            "d:/CODE/Hackathon/llm/all-MiniLM-L6-v2",
+            str(EMBEDDING_MODEL_PATH),
         )
     )
     batch_size: int = Field(

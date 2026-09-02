@@ -1,7 +1,7 @@
 """Unit tests for document parser."""
 from __future__ import annotations
 
-from pathlib import Path
+from backend.config.paths import DATA_DIR
 from backend.parsers.document_parser import DocumentParser
 
 
@@ -14,7 +14,7 @@ def test_extract_text_from_txt_and_missing() -> None:
     assert missing == ""
 
     # Temporary text file test
-    tmp_path = Path("d:/CODE/Hackathon/backend/data/test_sample.txt")
+    tmp_path = DATA_DIR / "test_sample.txt"
     tmp_path.write_text("Supply of 500 MT of TMT Rebars as per IS 1786 Fe 500D.", encoding="utf-8")
 
     extracted = parser.extract_text_from_file(tmp_path)

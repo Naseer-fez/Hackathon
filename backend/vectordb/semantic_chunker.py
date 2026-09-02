@@ -23,8 +23,12 @@ class SemanticChunker:
 
     def build_chunk(self, standard: Any, qco_data: Any = None) -> tuple[str, str, dict[str, Any]]:
         """Create a semantically complete document text, chunk ID, and metadata payload."""
-        std_id = str(self._extract_field(standard, "standard_id", ""))
-        is_num = str(self._extract_field(standard, "is_number", ""))
+        std_id = str(self._extract_field(standard, "standard_id", "") or self._extract_field(standard, "is_code", ""))
+        is_num = str(self._extract_field(standard, "is_number", "") or self._extract_field(standard, "is_code", ""))
+        if not std_id and is_num:
+            std_id = is_num
+        if not is_num and std_id:
+            is_num = std_id
         year = int(self._extract_field(standard, "year", 2015) or 2015)
         title = str(self._extract_field(standard, "title", ""))
         scope = str(self._extract_field(standard, "scope", ""))

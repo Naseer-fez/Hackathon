@@ -175,7 +175,46 @@ class OpenRouterLlmProvider(BaseLlmProvider):
             async for chunk in self._fallback.generate_text_stream(prompt, system_prompt): yield chunk
 
 
+class RemoteMacLlmProvider(BaseLlmProvider):
+    """Remote Mac LLM Provider for distributed reasoning."""
+
+    def __init__(self, endpoint: str | None = None) -> None:
+        self._endpoint = endpoint or app_settings.distributed_reasoning.mac_endpoint
+        self._fallback = DeterministicFallbackProvider()
+
+    async def generate_text(self, prompt: str, system_prompt: str | None = None) -> str:
+        payload = {"prompt": prompt, "system_prompt": system_prompt or ""}
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                res = await client.post(self._endpoint, json=payload)
+                if res.status_code == 200:
+                    data = res.json()
+                    # Expecting {"response": "..."} or similar, falling back to raw text if it's not JSON dict
+                    if isinstance(data, dict) and "response" in data:
+                        return data["response"]
+                    elif isinstance(data, dict) and "content" in data:
+                        return data["content"]
+                    return res.text
+        except (httpx.HTTPError, KeyError, IndexError, OSError):
+            pass
+        return await self._fallback.generate_text(prompt, system_prompt)
+
+    async def generate_text_stream(self, prompt: str, system_prompt: str | None = None) -> AsyncGenerator[str, None]:
+        payload = {"prompt": prompt, "system_prompt": system_prompt or "", "stream": True}
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                async with client.stream("POST", self._endpoint, json=payload) as res:
+                    if res.status_code != 200:
+                        async for chunk in self._fallback.generate_text_stream(prompt, system_prompt): yield chunk
+                        return
+                    async for line in res.aiter_lines():
+                        if line:
+                            yield line + "\n"
+        except Exception:
+            async for chunk in self._fallback.generate_text_stream(prompt, system_prompt): yield chunk
+
+
 from backend.engine.local_gguf_provider import LocalGgufLlmProvider
 
-__all__ = ["UnavailableLlmProvider", "DeterministicFallbackProvider", "GeminiLlmProvider", "OpenAiLlmProvider", "OpenRouterLlmProvider", "LocalGgufLlmProvider"]
+__all__ = ["UnavailableLlmProvider", "DeterministicFallbackProvider", "GeminiLlmProvider", "OpenAiLlmProvider", "OpenRouterLlmProvider", "LocalGgufLlmProvider", "RemoteMacLlmProvider"]
 
