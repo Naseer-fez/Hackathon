@@ -16,8 +16,8 @@ storage:
   upload_dir: "backend/data/uploads"
 
 ai_engine:
-  embedding_model_name: "llm/all-MiniLM-L6-v2"
-  multilingual_model_name: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+  embedding_model_name: "llm/paraphrase-multilingual-MiniLM-L12-v2"
+  multilingual_model_name: "llm/paraphrase-multilingual-MiniLM-L12-v2"
   similarity_threshold: 0.35
   top_k_recommendations: 5
   hybrid_alpha: 0.65
@@ -73,6 +73,6 @@ vector_database:
   collection_name: "bis_standards_collection"
 
 distributed_reasoning:
-  mac_available: false
+  mac_available: true
   mac_endpoint: "http://localhost:5000/reason"
-  local_preprocessor_model: "llm/gemma-2b.gguf"
+  local_preprocessor_model: "llm/gemma-2-2b-it-Q4_K_M.gguf"

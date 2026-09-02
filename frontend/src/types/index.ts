@@ -128,3 +128,13 @@ export interface GraphData {
     relation: string;
   }>;
 }
+
+export interface PipelineAnswerResponse {
+  query: string;
+  answer: string;
+  source_tier: string;
+  synthesized_context?: string;
+  summarized_history?: string;
+  confidence_score: number;
+}
+

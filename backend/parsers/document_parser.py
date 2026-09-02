@@ -14,7 +14,15 @@ class DocumentParser:
         self._ocr = ocr_service or OcrService()
 
     def extract_text_from_pdf(self, file_path: str | Path) -> str:
-        """Extract text from PDF, falling back to OCR if page has no embedded text."""
+        """Extract text/markdown from PDF using pymupdf4llm on CPU, falling back to OCR if page has no text."""
+        try:
+            import pymupdf4llm
+            md_text = pymupdf4llm.to_markdown(str(file_path))
+            if md_text and len(md_text.strip()) > 30:
+                return md_text.strip()
+        except Exception:
+            pass
+
         text_parts: list[str] = []
         try:
             doc = fitz.open(str(file_path))

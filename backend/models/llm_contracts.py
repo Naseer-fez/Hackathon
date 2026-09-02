@@ -16,6 +16,9 @@ class LlmInputContract(BaseModel):
     image_context: dict[str, Any] = Field(default_factory=dict)
     qco_alert: str = ""
     system_instruction: str = ""
+    chat_history: list[dict[str, str]] = Field(default_factory=list)
+    pipeline_mode: str = "standard"
+    refresh_context: bool = False
 
 
 class LlmStandardizedResponse(BaseModel):
@@ -30,4 +33,15 @@ class LlmStandardizedResponse(BaseModel):
     cited_clauses: list[str] = Field(default_factory=list)
     confidence_score: float = 0.95
     source_tier: str = "primary"
+
+
+class PipelineAnswerResponse(BaseModel):
+    """Standard response for fast answer and heavy reasoning pipelines."""
+    query: str
+    answer: str
+    source_tier: str
+    synthesized_context: str = ""
+    summarized_history: str = ""
+    confidence_score: float = 0.95
+
 

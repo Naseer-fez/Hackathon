@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 import uvicorn
+from backend.api.distributed_pipeline_router import router as distributed_router
 from backend.api.gem_webhook_router import router as gem_router
 from backend.api.llm_router import router as llm_router
 from backend.api.pipeline_router import router as pipeline_router
@@ -72,6 +73,8 @@ app.include_router(std_router)
 app.include_router(gem_router)
 app.include_router(llm_router)
 app.include_router(pipeline_router)
+app.include_router(distributed_router)
+
 
 
 @app.get("/api/v1/health")

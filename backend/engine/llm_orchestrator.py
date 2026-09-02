@@ -1,15 +1,19 @@
-"""LLM Abstraction Orchestrator with Cloud-Primary execution and silent Local Fallback."""
+"""Distributed LLM Orchestrator with Mac Offloading and Local 6GB VRAM coordination."""
 from __future__ import annotations
 import asyncio
 from typing import Any
 from backend.config.settings import app_settings
+from backend.engine.document_chunk_reranker import DocumentChunkReranker
 from backend.engine.llm_interface import BaseLlmProvider
 from backend.engine.llm_providers import (
-    DeterministicFallbackProvider, GeminiLlmProvider, LocalGgufLlmProvider, OpenAiLlmProvider, OpenRouterLlmProvider
+    DeterministicFallbackProvider, GeminiLlmProvider, LocalGgufLlmProvider,
+    OpenAiLlmProvider, OpenRouterLlmProvider, RemoteMacLlmProvider,
 )
-from backend.engine.prompts import MASTER_SYSTEM_PROMPT, format_evaluation_prompt
+from backend.engine.orchestrator_helpers import (
+    build_orchestrator_prompt, count_history_tokens, synthesize_contract_response,
+)
 from backend.logger.app_logger import get_logger
-from backend.models.llm_contracts import LlmInputContract, LlmStandardizedResponse
+from backend.models.llm_contracts import LlmInputContract, LlmStandardizedResponse, PipelineAnswerResponse
 
 logger = get_logger("engine.llm_orchestrator")
 
@@ -24,7 +28,7 @@ def _get_default_cloud_provider() -> BaseLlmProvider:
 
 
 class LlmOrchestrator:
-    """Cloud-Primary LLM Router with instant failover to Local LLM / deterministic tier."""
+    """Orchestrates Fast Answer (Local 2B) and Heavy Reasoning (Mac Offload / Local 7B)."""
 
     def __init__(
         self,
@@ -34,53 +38,135 @@ class LlmOrchestrator:
         cloud_provider: BaseLlmProvider | None = None,
         local_provider: BaseLlmProvider | None = None,
     ) -> None:
-        self._cloud = cloud or cloud_provider or _get_default_cloud_provider()
-        self._local = local or local_provider or LocalGgufLlmProvider()
+        self._distributed = app_settings.distributed_reasoning.mac_available
+        if self._distributed:
+            self._cloud = cloud or cloud_provider or RemoteMacLlmProvider()
+            self._local = local or local_provider or LocalGgufLlmProvider(
+                model_path=app_settings.distributed_reasoning.local_preprocessor_model
+            )
+            self._timeout_sec = 120.0
+        else:
+            self._cloud = cloud or cloud_provider or _get_default_cloud_provider()
+            self._local = local or local_provider or LocalGgufLlmProvider()
+            self._timeout_sec = timeout_sec
         self._fallback = DeterministicFallbackProvider()
-        self._timeout_sec = timeout_sec
+        self._reranker = DocumentChunkReranker()
 
-    def _build_prompt(self, c: LlmInputContract) -> tuple[str, str]:
-        sys_p = c.system_instruction or MASTER_SYSTEM_PROMPT
-        top_s = c.candidate_standards[0] if c.candidate_standards else None
-        user_p = format_evaluation_prompt(
-            query=c.query, standard=top_s, qco_alert=c.qco_alert,
-            document_chunks=c.document_chunks, image_context=c.image_context,
-            detected_language=c.detected_language,
+    async def summarize_chat_history(self, chat_history: list[dict[str, str]]) -> str:
+        """Compress long conversation history into a dense summary using local model."""
+        if not chat_history:
+            return ""
+        history_text = "\n".join(f"{m.get('role', 'user').capitalize()}: {m.get('content', '')}" for m in chat_history)
+        prompt = (
+            "Summarize the technical and procurement specifications in this chat history into a dense, "
+            f"accurate context overview:\n\n{history_text}"
         )
-        return sys_p, user_p
+        try:
+            summary = await self._local.generate_text(prompt, system_prompt="You are a context compression assistant.")
+            return summary.strip() if summary else ""
+        except (RuntimeError, ValueError, OSError) as exc:
+            logger.warning(f"Failed to summarize chat history ({type(exc).__name__}): {exc}")
+            return history_text[-2000:]
 
-    def _synthesize(self, c: LlmInputContract, raw: str, tier: str) -> LlmStandardizedResponse:
-        top_s = c.candidate_standards[0] if c.candidate_standards else None
-        code, title = (top_s.is_code, top_s.title) if top_s else ("IS General", "Indian Standard")
-        tests = top_s.test_methods if top_s else ["Standard Conformance"]
-        allied = [f"{r} (Normative Reference)" for r in top_s.normative_references] if top_s else []
-        citations = [f"{k.get('file_name', 'Doc')} (Page {k.get('page_number', 1)})" for k in c.document_chunks[:3]]
-        verdict = c.qco_alert or ("Mandatory ISI Mark (Scheme I)" if top_s and top_s.mandatory_qco.is_mandatory else "Voluntary Conformance")
-        return LlmStandardizedResponse(
-            query=c.query, primary_is_code=code, primary_title=title,
-            technical_justification=raw.strip() or f"Standard {code} matches requirements for {c.query}.",
-            qco_compliance_verdict=verdict, mandatory_test_methods=tests, allied_standards_summary=allied,
-            cited_clauses=citations, confidence_score=0.96 if tier == "cloud" else (0.92 if tier == "local_fallback" else 0.88),
-            source_tier=tier,
+    async def synthesize_document_context(self, query: str, document_chunks: list[dict[str, Any]]) -> str:
+        """Generate a descriptive, compressed contextual prompt from retrieved chunks using local model."""
+        if not document_chunks:
+            return ""
+        chunk_texts = "\n\n".join(str(c.get("text", "")) for c in document_chunks)
+        prompt = (
+            f"User Query: '{query}'\n\nRetrieved Specification Chunks:\n{chunk_texts}\n\n"
+            "Synthesize a highly descriptive, comprehensive, and compressed contextual summary."
+        )
+        try:
+            return await self._local.generate_text(prompt, system_prompt="You are a technical context synthesizer.")
+        except (RuntimeError, ValueError, OSError) as exc:
+            logger.warning(f"Failed to synthesize document context ({type(exc).__name__}): {exc}")
+            return chunk_texts[:2000]
+
+    async def execute_fast_answer(self, query: str, pdf_text: str = "") -> PipelineAnswerResponse:
+        """Feature A: Rapid response executing solely on the local model."""
+        tier = "local_2b" if self._distributed else "local_7b"
+        prompt = f"User Query: {query}"
+        if pdf_text.strip():
+            prompt += f"\n\nDocument Context:\n{pdf_text[:3000]}"
+        prompt += "\n\nProvide a rapid, precise answer on Indian Standards compliance and requirements."
+        try:
+            raw = await self._local.generate_text(prompt, system_prompt="You are a fast Indian Standards assistant.")
+            if raw and len(raw.strip()) > 5:
+                return PipelineAnswerResponse(query=query, answer=raw.strip(), source_tier=tier)
+        except (RuntimeError, ValueError, OSError) as exc:
+            logger.warning(f"Fast Answer local inference failed ({type(exc).__name__}): {exc}")
+        return PipelineAnswerResponse(
+            query=query, answer="No local LLM available for fast answer generation.", source_tier="unavailable", confidence_score=0.0
+        )
+
+    async def execute_heavy_reasoning(
+        self, query: str, pdf_text: str = "", chat_history: list[dict[str, str]] | None = None, refresh_context: bool = False
+    ) -> PipelineAnswerResponse:
+        """Feature B & C: Heavy reasoning pipeline with optional Mac offloading and context synthesis."""
+        history_summary = ""
+        if chat_history:
+            if refresh_context or count_history_tokens(chat_history) > 3000:
+                history_summary = await self.summarize_chat_history(chat_history)
+
+        synthesized_context = ""
+        if pdf_text.strip():
+            chunks = self._reranker.retrieve_and_rerank_chunks(query, pdf_text, top_k=5)
+            synthesized_context = await self.synthesize_document_context(query, chunks)
+
+        mac_prompt = f"User Query: {query}\n"
+        if history_summary:
+            mac_prompt += f"\n[Conversation History Summary]:\n{history_summary}\n"
+        if synthesized_context:
+            mac_prompt += f"\n[Synthesized Specification Context]:\n{synthesized_context}\n"
+        mac_prompt += "\nPerform exhaustive technical reasoning, QCO compliance checking, and IS verification."
+
+        if self._distributed:
+            try:
+                raw = await asyncio.wait_for(self._cloud.generate_text(mac_prompt), timeout=self._timeout_sec)
+                if raw and len(raw.strip()) > 10:
+                    return PipelineAnswerResponse(
+                        query=query, answer=raw.strip(), source_tier="remote_mac",
+                        synthesized_context=synthesized_context, summarized_history=history_summary,
+                    )
+            except (asyncio.TimeoutError, OSError, ValueError) as exc:
+                logger.warning(f"Remote Mac reasoning unavailable ({type(exc).__name__}) -> Local fallback")
+
+        try:
+            raw = await self._local.generate_text(mac_prompt)
+            if raw and len(raw.strip()) > 10:
+                return PipelineAnswerResponse(
+                    query=query, answer=raw.strip(), source_tier="local_7b_fallback" if self._distributed else "local_7b",
+                    synthesized_context=synthesized_context, summarized_history=history_summary,
+                )
+        except (RuntimeError, ValueError, OSError) as exc:
+            logger.warning(f"Local reasoning failed ({type(exc).__name__}): {exc}")
+
+        return PipelineAnswerResponse(
+            query=query, answer="No AI model is currently active to perform heavy reasoning.", source_tier="unavailable", confidence_score=0.0
         )
 
     async def execute(self, contract: LlmInputContract) -> LlmStandardizedResponse:
-        sys_p, user_p = self._build_prompt(contract)
+        """Legacy / Standard execution entry point."""
+        if getattr(self, "_distributed", False) and contract.document_chunks:
+            synth = await self.synthesize_document_context(contract.query, contract.document_chunks)
+            contract.document_chunks = [{"text": synth, "file_name": "Synthesized Context", "page_number": 1}]
+
+        sys_p, user_p = build_orchestrator_prompt(contract)
         try:
-            logger.info(f"LLM Orchestrator: Invoking Primary Cloud LLM ({self._cloud.__class__.__name__})...")
             raw = await asyncio.wait_for(self._cloud.generate_text(user_p, sys_p), timeout=self._timeout_sec)
             if raw and len(raw.strip()) > 20:
-                return self._synthesize(contract, raw, tier="cloud")
-        except (asyncio.TimeoutError, OSError, ValueError, Exception) as exc:
-            logger.warning(f"[FALLBACK] Cloud LLM unavailable ({type(exc).__name__}) -> Local GGUF Tier")
+                return synthesize_contract_response(contract, raw, "remote_mac" if self._distributed else "cloud")
+        except (asyncio.TimeoutError, OSError, ValueError) as exc:
+            logger.warning(f"Primary LLM unavailable ({type(exc).__name__}) -> Local/Fallback Tier")
 
-        try:
-            logger.info(f"LLM Orchestrator: Invoking Local GGUF Provider ({self._local.__class__.__name__})...")
-            local_raw = await self._local.generate_text(user_p, sys_p)
-            if local_raw and len(local_raw.strip()) > 20:
-                return self._synthesize(contract, local_raw, tier="local_fallback")
-        except (RuntimeError, OSError, ValueError, Exception) as exc:
-            logger.warning(f"[FALLBACK] Local GGUF unavailable ({type(exc).__name__}) -> Deterministic")
+        if not getattr(self, "_distributed", False):
+            try:
+                raw = await self._local.generate_text(user_p, sys_p)
+                if raw and len(raw.strip()) > 20:
+                    return synthesize_contract_response(contract, raw, "local_fallback")
+            except (RuntimeError, OSError, ValueError) as exc:
+                logger.warning(f"Local GGUF unavailable ({type(exc).__name__}) -> Deterministic")
 
         top_s = contract.candidate_standards[0] if contract.candidate_standards else None
         return LlmStandardizedResponse(

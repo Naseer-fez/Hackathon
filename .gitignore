@@ -25,6 +25,11 @@ vectordb/.venv/
 vectordb/7da7004f-aeb9-4cda-ae15-305300c21bac/
 legacy/vectordb/
 backend/data/uploads/
+backend/data/datasets/**/*.jsonl
+backend/data/datasets/**/*.parquet
+backend/data/datasets/**/*.tar.gz
+backend/data/datasets/**/*.zip
+*.jsonl
 
 # Node / Frontend
 node_modules/

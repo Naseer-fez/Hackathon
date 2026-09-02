@@ -33,7 +33,7 @@ SEMANTIC_CACHE_DB_PATH: Path = Path(os.getenv("SEMANTIC_CACHE_DB_PATH", str(DATA
 
 # AI Models & LLM directory
 LLM_DIR: Path = Path(os.getenv("LLM_DIR", str(PROJECT_ROOT / "llm")))
-EMBEDDING_MODEL_PATH: Path = Path(os.getenv("EMBEDDING_MODEL_PATH", str(LLM_DIR / "all-MiniLM-L6-v2")))
+EMBEDDING_MODEL_PATH: Path = Path(os.getenv("EMBEDDING_MODEL_PATH", str(LLM_DIR / "paraphrase-multilingual-MiniLM-L12-v2")))
 RERANKER_MODEL_PATH: Path = Path(os.getenv("RERANKER_MODEL_PATH", str(LLM_DIR / "bge-reranker-small")))
 DEFAULT_GGUF_MODEL_PATH: Path = Path(os.getenv("DEFAULT_GGUF_MODEL_PATH", str(LLM_DIR / "Qwen2.5-7B-Instruct-Q4_K_M.gguf")))
 GRAMMAR_FILE_PATH: Path = Path(os.getenv("GRAMMAR_FILE_PATH", str(BACKEND_DIR / "engine" / "grammars" / "bis_output.gbnf")))
