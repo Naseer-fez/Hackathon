@@ -2,10 +2,10 @@
 from __future__ import annotations
 import re
 from typing import Any
-from rapidfuzz import fuzz
 from backend.config.settings import app_settings
 from backend.engine.chroma_hydrator import hydrate_standard_from_chroma
 from backend.engine.embedding_service import EmbeddingService
+from backend.engine.bm25_engine import BM25Engine
 from backend.ingestion.standards_loader import StandardsLoader
 from backend.logger.app_logger import get_logger
 from backend.models.recommendation_model import DocumentChunkEvidence
@@ -18,7 +18,7 @@ logger = get_logger("engine.hybrid_retriever")
 
 
 class HybridRetriever:
-    """Combines ChromaDB dense retrieval with in-memory lexical matching and document chunk evidence."""
+    """Combines ChromaDB dense retrieval with multithreaded BM25 lexical matching."""
 
     def __init__(self, loader: StandardsLoader | None = None, embed_svc: EmbeddingService | None = None) -> None:
         self._loader = loader or StandardsLoader()
@@ -27,10 +27,10 @@ class HybridRetriever:
         self._standards = self._loader.get_all_standards()
         self._expander = QueryExpander()
         self._reranker = RerankerService()
-
-    def _calculate_lexical_score(self, query: str, s: IndianStandard) -> float:
-        target = f"{s.is_code} {s.title} {' '.join(s.category_keywords)}".lower()
-        return float(fuzz.token_set_ratio(query.lower(), target) / 100.0)
+        
+        # Initialize Multithreaded BM25 Engine
+        self._bm25 = BM25Engine()
+        self._bm25.build_index(self._standards)
 
     def search(self, query: str, division: str | None = None, top_k: int = 5) -> list[tuple[IndianStandard, float, list[str]]]:
         """Perform Stage 1: Macro Standard Discovery."""
@@ -46,33 +46,40 @@ class HybridRetriever:
         
         pool_size = getattr(app_settings.ai_engine, "reranker_candidate_pool", 25)
 
+        # 1. Dense retrieval via ChromaDB
         try:
             hits = self._vectordb.search(query=expanded_query, division=division, top_k=pool_size)
             for hit in hits:
                 std = hydrate_standard_from_chroma(hit, self._loader)
-                lex_score = self._calculate_lexical_score(expanded_query, std)
                 dense_score = float(hit.get("similarity_score", 0.0))
-                hybrid_score = (alpha * dense_score) + ((1.0 - alpha) * lex_score)
-                reasons = [f"ChromaDB Vector match ({dense_score:.2f})"]
-                if lex_score > 0.4:
-                    reasons.append(f"Keyword alignment ({lex_score:.2f})")
-                results_map[std.is_code] = (std, hybrid_score, reasons)
+                hybrid_score = alpha * dense_score
+                results_map[std.is_code] = (std, hybrid_score, [f"ChromaDB Vector match ({dense_score:.2f})"])
         except (KeyError, ValueError, Exception) as exc:
-            logger.warning(f"[FALLBACK] ChromaDB search error ({type(exc).__name__}) -> using in-memory catalog")
+            logger.warning(f"[FALLBACK] ChromaDB search error ({type(exc).__name__}) -> proceeding with BM25 only")
 
-        for s in self._standards:
-            if division and s.division.upper() != division.upper():
-                continue
-            lex_score = self._calculate_lexical_score(expanded_query, s)
-            reasons = []
-            code_num = re.sub(r"[^\d]", "", s.is_code)
-            if code_num and code_num in query:  # use original query for exact code match check
-                lex_score, reasons = max(lex_score, 0.95), [f"Direct match on standard code {s.is_code}"]
-            if s.is_code in results_map:
-                std, ex_sc, ex_r = results_map[s.is_code]
-                results_map[s.is_code] = (s, max(ex_sc, lex_score), list(set(ex_r + reasons)))
-            elif lex_score > 0.45:
-                results_map[s.is_code] = (s, lex_score, [f"Curated catalog match ({lex_score:.2f})"])
+        # 2. Sparse / Lexical retrieval via Multithreaded BM25
+        bm25_hits = self._bm25.search(query=expanded_query, top_k=pool_size, division=division)
+        
+        # Normalize BM25 scores roughly for hybrid weighting
+        max_bm25 = max([score for _, score in bm25_hits], default=1.0)
+        max_bm25 = max_bm25 if max_bm25 > 0 else 1.0
+
+        for std, bm25_score in bm25_hits:
+            norm_score = bm25_score / max_bm25
+            reasons = [f"BM25 Lexical match ({norm_score:.2f})"]
+            
+            code_num = re.sub(r"[^\d]", "", std.is_code)
+            if code_num and code_num in query:
+                norm_score = max(norm_score, 0.95)
+                reasons.append(f"Direct match on standard code {std.is_code}")
+
+            if std.is_code in results_map:
+                _, ex_sc, ex_r = results_map[std.is_code]
+                new_score = ex_sc + ((1.0 - alpha) * norm_score)
+                results_map[std.is_code] = (std, new_score, list(set(ex_r + reasons)))
+            else:
+                if norm_score > 0.45:
+                    results_map[std.is_code] = (std, norm_score, reasons)
 
         ranked = sorted(results_map.values(), key=lambda item: item[1], reverse=True)
         

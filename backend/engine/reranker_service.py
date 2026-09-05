@@ -29,12 +29,18 @@ class RerankerService:
         """Lazy-load the cross-encoder model onto CUDA if available, else CPU."""
         if self._load_failed or RerankerService._load_failed:
             return
+        if self._cross_encoder is not None:
+            return
+        if RerankerService._cross_encoder is not None:
+            self._cross_encoder = RerankerService._cross_encoder
+            return
         try:
             from sentence_transformers import CrossEncoder
 
             device = "cuda:0" if (app_settings.ai_engine.enable_gpu and torch.cuda.is_available()) else "cpu"
             logger.info(f"Loading cross-encoder model '{self._model_name}' on {device}...")
-            model = CrossEncoder(self._model_name, device=device)
+            kwargs = {"torch_dtype": torch.float16} if "cuda" in device else {}
+            model = CrossEncoder(self._model_name, device=device, model_kwargs=kwargs)
             self._cross_encoder = model
             RerankerService._cross_encoder = model
             logger.info(f"Cross-encoder model '{self._model_name}' loaded successfully on {device}.")
@@ -46,43 +52,47 @@ class RerankerService:
                 "Falling back to hybrid-only ranking."
             )
 
-    def rerank(
-        self,
-        query: str,
-        candidates: list[_CandidateTuple],
-        top_k: int,
-    ) -> list[_CandidateTuple]:
+    def preload(self) -> bool:
+        """Preload cross-encoder model weights into GPU VRAM."""
+        self._load_model()
+        return (self._cross_encoder or RerankerService._cross_encoder) is not None
+
+    def warmup(self) -> bool:
+        """Warm up cross-encoder inference compute graph on GPU."""
+        if not self.preload():
+            return False
+        model = self._cross_encoder or RerankerService._cross_encoder
+        if model is not None:
+            try:
+                model.predict([["warmup query", "warmup passage"]])
+                logger.info("Reranker model warmed up successfully.")
+                return True
+            except (RuntimeError, ValueError, TypeError) as exc:
+                logger.warning(f"Reranker warm-up failed ({type(exc).__name__}: {exc})")
+        return False
+
+    def rerank(self, query: str, candidates: list[_CandidateTuple], top_k: int) -> list[_CandidateTuple]:
         """Rerank candidates using cross-encoder scores."""
         if not candidates:
             return []
-
         model = self._cross_encoder or RerankerService._cross_encoder
         if model is None and not (self._load_failed or RerankerService._load_failed):
             self._load_model()
             model = self._cross_encoder or RerankerService._cross_encoder
-
         if model is None:
             logger.warning("Cross-encoder unavailable; returning hybrid-ranked results.")
             return candidates[:top_k]
 
-        pairs: list[list[str]] = []
-        for std, _score, _reasons in candidates:
-            candidate_text = f"{std.is_code} {std.title} {std.scope}"
-            pairs.append([query, candidate_text])
-
+        pairs = [[query, f"{std.is_code} {std.title} {std.scope}"] for std, _, _ in candidates]
         try:
             scores = model.predict(pairs)
         except (RuntimeError, ValueError, TypeError) as exc:
-            logger.warning(f"Cross-encoder prediction failed ({type(exc).__name__}): {exc}")
+            logger.warning(f"Cross-encoder prediction failed ({type(exc).__name__}: {exc})")
             return candidates[:top_k]
 
         scored: list[tuple[float, _CandidateTuple]] = []
-        for idx, (std, hybrid_score, reasons) in enumerate(candidates):
+        for idx, (std, _hscore, reasons) in enumerate(candidates):
             ce_score = float(scores[idx])
-            updated_reasons = reasons + [f"Cross-Encoder reranked (score: {ce_score:.3f})"]
-            scored.append((ce_score, (std, ce_score, updated_reasons)))
-
+            scored.append((ce_score, (std, ce_score, reasons + [f"Cross-Encoder reranked (score: {ce_score:.3f})"])))
         scored.sort(key=lambda item: item[0], reverse=True)
-        reranked = [entry for _ce, entry in scored[:top_k]]
-        logger.info(f"Cross-encoder reranked {len(candidates)} candidates -> top {top_k}")
-        return reranked
+        return [entry for _, entry in scored[:top_k]]

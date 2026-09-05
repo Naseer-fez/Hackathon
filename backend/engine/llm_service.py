@@ -1,11 +1,13 @@
 """Unified LLM service layer with provider factory, singleton caching, and domain reasoning."""
 from __future__ import annotations
+from pathlib import Path
 import threading
 from typing import Any, AsyncGenerator
 from backend.config.settings import app_settings
 from backend.engine.llm_interface import BaseLlmProvider
 from backend.engine.llm_providers import (
-    DeterministicFallbackProvider, GeminiLlmProvider, LocalGgufLlmProvider, OpenAiLlmProvider, OpenRouterLlmProvider
+    DeterministicFallbackProvider, GeminiLlmProvider, LocalGgufLlmProvider,
+    OpenAiLlmProvider, OpenRouterLlmProvider, RemoteMacLlmProvider,
 )
 from backend.engine.prompts import (
     MASTER_SYSTEM_PROMPT, format_chunk_excerpts, format_evaluation_prompt,
@@ -55,10 +57,36 @@ _format_chunk_context = format_chunk_excerpts
 
 def get_llm_provider(provider_type: str | None = None) -> BaseLlmProvider:
     """Factory returning persistent singleton LLM provider based on config or argument."""
-    sel = (provider_type or app_settings.llm.provider).lower()
+    mac_mode = app_settings.distributed_reasoning.mac_available
+    raw_sel = provider_type.lower() if provider_type else None
+
+    if mac_mode:
+        if raw_sel in ("local", "local_gguf", "gguf", "local_2b", "preprocessor", "local_operations", "fast_answer"):
+            sel = "local_2b"
+        elif raw_sel in ("mac", "remote_mac", "reasoning", "remote", "cloud", "heavy_reasoning"):
+            sel = "remote_mac"
+        elif raw_sel is None or raw_sel == "default":
+            sel = "remote_mac"
+        else:
+            sel = raw_sel
+    else:
+        sel = (raw_sel or app_settings.llm.provider).lower()
+
     with _LOCK:
         if sel not in _CACHE:
-            if sel in ("local_gguf", "gguf", "local"):
+            if sel == "local_2b":
+                prep_path = app_settings.distributed_reasoning.local_preprocessor_model
+                if not Path(prep_path).exists():
+                    for alt in ("llm/Qwen2.5-3B-Instruct-Q4_K_M.gguf", "llm/gemma-2-2b-it-Q4_K_M.gguf"):
+                        if Path(alt).exists():
+                            prep_path = alt
+                            break
+                _CACHE[sel] = LocalGgufLlmProvider(model_path=prep_path)
+            elif sel == "remote_mac":
+                _CACHE[sel] = RemoteMacLlmProvider(
+                    endpoint=app_settings.distributed_reasoning.mac_endpoint
+                )
+            elif sel in ("local_gguf", "gguf", "local"):
                 _CACHE[sel] = LocalGgufLlmProvider()
             elif sel in ("openrouter", "open_router"):
                 _CACHE[sel] = OpenRouterLlmProvider()

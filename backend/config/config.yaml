@@ -30,7 +30,7 @@ llm:
   provider: "local_gguf"
   model_name: "Qwen2.5-7B-Instruct-Q4_K_M"
   model_path: "llm/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
-  n_ctx: 4096
+  n_ctx: 32768
   n_threads: 4
   n_gpu_layers: 24
   chat_format: "chatml"
@@ -75,4 +75,4 @@ vector_database:
 distributed_reasoning:
   mac_available: true
   mac_endpoint: "http://localhost:5000/reason"
-  local_preprocessor_model: "llm/gemma-2-2b-it-Q4_K_M.gguf"
+  local_preprocessor_model: "llm/Qwen2.5-3B-Instruct-Q4_K_M.gguf"

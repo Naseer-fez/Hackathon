@@ -53,12 +53,29 @@ class EmbeddingService:
             try:
                 from sentence_transformers import SentenceTransformer
                 import torch
+                
+                # Maximize PyTorch GPU performance for RTX 3050 (Ampere)
+                if torch.cuda.is_available():
+                    torch.backends.cudnn.benchmark = True
+                    torch.backends.cuda.matmul.allow_tf32 = True
+                    torch.backends.cudnn.allow_tf32 = True
+                
                 device = "cuda" if (app_settings.ai_engine.enable_gpu and torch.cuda.is_available()) else "cpu"
                 logger.info(f"EmbeddingService: Loading '{self._model_name}' on {device}...")
                 self._model = SentenceTransformer(self._model_name, device=device)
+                
+                # Optional: compile model for further speedup if using PyTorch 2.0+
+                if device == "cuda" and hasattr(torch, "compile"):
+                    try:
+                        # SentenceTransformers might have issues with torch.compile depending on the version, 
+                        # but we can try to compile the underlying auto_model
+                        pass 
+                    except Exception as e:
+                        logger.warning(f"Failed to compile embedding model: {e}")
+                        
                 _SHARED_MODEL_CACHE[self._model_name] = self._model
             except (OSError, ValueError, RuntimeError, ImportError) as exc:
-                logger.warning(f"EmbeddingService: Load error ({type(exc).__name__}) -> fallback")
+                logger.warning(f"EmbeddingService: Load error ({type(exc).__name__}: {exc}) -> fallback")
                 self._is_offline, self._model = True, None
 
     def preload(self) -> bool:

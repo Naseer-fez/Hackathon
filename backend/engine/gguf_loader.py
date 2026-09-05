@@ -13,18 +13,29 @@ def instantiate_llama(
     model_path: str, context_size: int, threads: int, gpu_layers: int, chat_format: str
 ) -> Any:
     """Instantiate Llama runtime with specified context size and GPU offload layers."""
+    import llama_cpp
     from llama_cpp import Llama
 
     gc.collect()
     logger.info(f"Local GGUF: Loading '{model_path}' (ctx={context_size}, gpu={gpu_layers})...")
+    
+    extra_kwargs: dict[str, Any] = {}
+    if context_size >= 16384:
+        q8 = getattr(llama_cpp, "GGML_TYPE_Q8_0", 8)
+        extra_kwargs["type_k"] = q8
+        extra_kwargs["type_v"] = q8
+        logger.info(f"Local GGUF: Enabled 8-bit quantized KV cache (Q8_0) for {context_size} context.")
+
     return Llama(
         model_path=model_path,
         n_ctx=context_size,
         n_threads=threads,
-        n_gpu_layers=gpu_layers,
+        n_gpu_layers=-1 if gpu_layers > 0 else 0, # Maximize GPU usage
         offload_kqv=(gpu_layers > 0),
+        flash_attn=(gpu_layers > 0),  # Maximize performance on Ampere/RTX 3050
         chat_format=chat_format,
         verbose=False,
+        **extra_kwargs,
     )
 
 

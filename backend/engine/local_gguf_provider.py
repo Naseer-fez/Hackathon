@@ -19,6 +19,19 @@ class BackpressureError(Exception):
     """Raised when the LLM inference queue is full."""
 
 
+def _build_messages(prompt: str, system_prompt: str | None, model_path: str) -> list[dict[str, str]]:
+    """Format messages according to model-specific role constraints."""
+    is_gemma = "gemma" in str(model_path).lower()
+    if is_gemma:
+        content = f"{system_prompt.strip()}\n\n{prompt.strip()}" if system_prompt and system_prompt.strip() else prompt
+        return [{"role": "user", "content": content}]
+    msgs: list[dict[str, str]] = []
+    if system_prompt and system_prompt.strip():
+        msgs.append({"role": "system", "content": system_prompt.strip()})
+    msgs.append({"role": "user", "content": prompt})
+    return msgs
+
+
 class LocalGgufLlmProvider(BaseLlmProvider):
     """Local GGUF provider with CUDA GPU acceleration, warm-up, and zero-unload caching."""
 
@@ -30,8 +43,17 @@ class LocalGgufLlmProvider(BaseLlmProvider):
         n_gpu_layers: int | None = None,
         chat_format: str | None = None,
     ) -> None:
-        self._model_path = model_path or app_settings.llm.model_path
-        self._n_ctx = n_ctx or app_settings.llm.n_ctx
+        if model_path:
+            self._model_path = model_path
+        elif app_settings.distributed_reasoning.mac_available:
+            self._model_path = app_settings.distributed_reasoning.local_preprocessor_model
+        else:
+            self._model_path = app_settings.llm.model_path
+
+        if n_ctx is not None:
+            self._n_ctx = n_ctx
+        else:
+            self._n_ctx = app_settings.llm.n_ctx
         self._n_threads = n_threads or app_settings.llm.n_threads
         self._n_gpu_layers = n_gpu_layers if n_gpu_layers is not None else app_settings.llm.n_gpu_layers
         self._chat_format = chat_format or app_settings.llm.chat_format
@@ -73,6 +95,13 @@ class LocalGgufLlmProvider(BaseLlmProvider):
         return instantiate_llama(self._model_path, ctx, self._n_threads, layers, self._chat_format)
 
     def _load_model(self) -> Any:
+        if app_settings.distributed_reasoning.mac_available:
+            path_str = str(self._model_path)
+            if ("7b" in path_str.lower() or path_str == str(app_settings.llm.model_path)) and path_str != str(app_settings.distributed_reasoning.local_preprocessor_model):
+                logger.warning(
+                    f"Local GGUF: Blocked loading 7B model '{self._model_path}' because mac_available is True."
+                )
+                return None
         if not Path(self._model_path).exists():
             logger.info(f"Local GGUF: Model binary not found at '{self._model_path}'")
             return None
@@ -109,18 +138,25 @@ class LocalGgufLlmProvider(BaseLlmProvider):
     def is_loaded(self) -> bool:
         return self._model is not None
 
-    def _sync_generate(self, prompt: str, system_prompt: str | None) -> str | None:
+    def _sync_generate(
+        self,
+        prompt: str,
+        system_prompt: str | None,
+        max_tokens: int | None = None,
+        use_grammar: bool = False,
+    ) -> str | None:
         if self._model is None:
             self._model = self._load_model()
         if self._model is None:
             return None
-        grammar = self._load_grammar()
-        msgs = [{"role": "system", "content": system_prompt or "Expert BIS advisor."}, {"role": "user", "content": prompt}]
+        grammar = self._load_grammar() if use_grammar else None
+        effective_max_tokens = max_tokens or (512 if "2b" in str(self._model_path).lower() else app_settings.llm.max_tokens)
+        msgs = _build_messages(prompt, system_prompt, self._model_path)
         try:
             resp = self._model.create_chat_completion(
                 messages=msgs,
                 temperature=app_settings.llm.temperature,
-                max_tokens=app_settings.llm.max_tokens,
+                max_tokens=effective_max_tokens,
                 grammar=grammar,
             )
             choices = resp.get("choices", [])
@@ -132,7 +168,7 @@ class LocalGgufLlmProvider(BaseLlmProvider):
                     resp = self._model.create_chat_completion(
                         messages=msgs,
                         temperature=app_settings.llm.temperature,
-                        max_tokens=app_settings.llm.max_tokens,
+                        max_tokens=effective_max_tokens,
                     )
                     choices = resp.get("choices", [])
                     return str(choices[0]["message"].get("content", "")) if choices and "message" in choices[0] else None
@@ -142,19 +178,26 @@ class LocalGgufLlmProvider(BaseLlmProvider):
             logger.warning(f"[FALLBACK] GGUF inference error ({type(exc).__name__}: {exc})")
             return None
 
-    def _sync_generate_stream(self, prompt: str, system_prompt: str | None) -> Any:
+    def _sync_generate_stream(
+        self,
+        prompt: str,
+        system_prompt: str | None,
+        max_tokens: int | None = None,
+        use_grammar: bool = False,
+    ) -> Any:
         if self._model is None:
             self._model = self._load_model()
         if self._model is None:
             yield "No LLM model is currently available (Local GGUF model not active)."
             return
-        grammar = self._load_grammar()
-        msgs = [{"role": "system", "content": system_prompt or "Expert BIS advisor."}, {"role": "user", "content": prompt}]
+        grammar = self._load_grammar() if use_grammar else None
+        effective_max_tokens = max_tokens or (512 if "2b" in str(self._model_path).lower() else app_settings.llm.max_tokens)
+        msgs = _build_messages(prompt, system_prompt, self._model_path)
         try:
             resp = self._model.create_chat_completion(
                 messages=msgs,
                 temperature=app_settings.llm.temperature,
-                max_tokens=app_settings.llm.max_tokens,
+                max_tokens=effective_max_tokens,
                 stream=True,
                 grammar=grammar,
             )
@@ -171,7 +214,7 @@ class LocalGgufLlmProvider(BaseLlmProvider):
                     resp = self._model.create_chat_completion(
                         messages=msgs,
                         temperature=app_settings.llm.temperature,
-                        max_tokens=app_settings.llm.max_tokens,
+                        max_tokens=effective_max_tokens,
                         stream=True,
                     )
                     for chunk in resp:
@@ -186,14 +229,21 @@ class LocalGgufLlmProvider(BaseLlmProvider):
             logger.warning(f"[FALLBACK] GGUF streaming error ({type(exc).__name__}: {exc})")
             yield f"\n[Error: {type(exc).__name__}]"
 
-    async def generate_text(self, prompt: str, system_prompt: str | None = None) -> str:
+    async def generate_text(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        max_tokens: int | None = None,
+        use_grammar: bool = False,
+        **kwargs: Any,
+    ) -> str:
         if self._queue_count >= self._max_queue:
             raise BackpressureError(f"LLM inference queue is full ({self._max_queue} pending)")
         self._queue_count += 1
         logger.info(f"Queue: request enqueued (position={self._queue_count})")
         try:
             async with self._semaphore:
-                out = await asyncio.to_thread(self._sync_generate, prompt, system_prompt)
+                out = await asyncio.to_thread(self._sync_generate, prompt, system_prompt, max_tokens, use_grammar)
                 if out and out.strip():
                     return out.strip()
         except BackpressureError:
@@ -204,7 +254,14 @@ class LocalGgufLlmProvider(BaseLlmProvider):
             self._queue_count -= 1
         return "No LLM model is currently available (Local GGUF model not active)."
 
-    async def generate_text_stream(self, prompt: str, system_prompt: str | None = None) -> AsyncGenerator[str, None]:
+    async def generate_text_stream(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        max_tokens: int | None = None,
+        use_grammar: bool = False,
+        **kwargs: Any,
+    ) -> AsyncGenerator[str, None]:
         if self._queue_count >= self._max_queue:
             raise BackpressureError(f"LLM inference queue is full ({self._max_queue} pending)")
         self._queue_count += 1
@@ -219,7 +276,7 @@ class LocalGgufLlmProvider(BaseLlmProvider):
 
                 def worker() -> None:
                     try:
-                        gen = self._sync_generate_stream(prompt, system_prompt)
+                        gen = self._sync_generate_stream(prompt, system_prompt, max_tokens, use_grammar)
                         for chunk in gen:
                             loop.call_soon_threadsafe(queue.put_nowait, chunk)
                     except Exception as e:

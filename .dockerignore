@@ -1,0 +1,6 @@
+node_modules
+.git
+.env
+.venv
+.pytest_cache
+phases

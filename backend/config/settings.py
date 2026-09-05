@@ -157,6 +157,11 @@ def load_settings(config_path: str | Path | None = None) -> AppSettings:
                     raw_data = _normalize_dict_paths(parsed)
         except (yaml.YAMLError, OSError, ValueError):
             raw_data = {}
+    env_mac = os.getenv("MAC_AVAILABLE")
+    if env_mac is not None:
+        if "distributed_reasoning" not in raw_data or not isinstance(raw_data["distributed_reasoning"], dict):
+            raw_data["distributed_reasoning"] = {}
+        raw_data["distributed_reasoning"]["mac_available"] = env_mac.strip().lower() in ("1", "true", "yes", "on")
     return AppSettings.model_validate(raw_data)
 
 

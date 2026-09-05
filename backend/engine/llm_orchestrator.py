@@ -9,6 +9,7 @@ from backend.engine.llm_providers import (
     DeterministicFallbackProvider, GeminiLlmProvider, LocalGgufLlmProvider,
     OpenAiLlmProvider, OpenRouterLlmProvider, RemoteMacLlmProvider,
 )
+from backend.engine.llm_service import get_llm_provider
 from backend.engine.orchestrator_helpers import (
     build_orchestrator_prompt, count_history_tokens, synthesize_contract_response,
 )
@@ -27,6 +28,18 @@ def _get_default_cloud_provider() -> BaseLlmProvider:
     return GeminiLlmProvider() if prov == "gemini" else OpenAiLlmProvider()
 
 
+def _safe_kwargs(method: Any, **desired: Any) -> dict[str, Any]:
+    """Filter keyword arguments down to those accepted by the callable."""
+    import inspect
+    try:
+        sig = inspect.signature(method)
+        if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
+            return desired
+        return {k: v for k, v in desired.items() if k in sig.parameters}
+    except (ValueError, TypeError):
+        return {}
+
+
 class LlmOrchestrator:
     """Orchestrates Fast Answer (Local 2B) and Heavy Reasoning (Mac Offload / Local 7B)."""
 
@@ -41,14 +54,11 @@ class LlmOrchestrator:
         self._distributed = app_settings.distributed_reasoning.mac_available
         if self._distributed:
             self._cloud = cloud or cloud_provider or RemoteMacLlmProvider()
-            self._local = local or local_provider or LocalGgufLlmProvider(
-                model_path=app_settings.distributed_reasoning.local_preprocessor_model
-            )
-            self._timeout_sec = 120.0
+            self._local = local or local_provider or get_llm_provider("local")
         else:
             self._cloud = cloud or cloud_provider or _get_default_cloud_provider()
-            self._local = local or local_provider or LocalGgufLlmProvider()
-            self._timeout_sec = timeout_sec
+            self._local = local or local_provider or get_llm_provider("local")
+        self._timeout_sec = getattr(app_settings.distributed_reasoning, "mac_timeout_sec", timeout_sec)
         self._fallback = DeterministicFallbackProvider()
         self._reranker = DocumentChunkReranker()
 
@@ -61,10 +71,14 @@ class LlmOrchestrator:
             "Summarize the technical and procurement specifications in this chat history into a dense, "
             f"accurate context overview:\n\n{history_text}"
         )
+        kwargs = _safe_kwargs(self._local.generate_text, max_tokens=250, use_grammar=False)
         try:
-            summary = await self._local.generate_text(prompt, system_prompt="You are a context compression assistant.")
+            summary = await asyncio.wait_for(
+                self._local.generate_text(prompt, system_prompt="You are a context compression assistant.", **kwargs),
+                timeout=20.0,
+            )
             return summary.strip() if summary else ""
-        except (RuntimeError, ValueError, OSError) as exc:
+        except (asyncio.TimeoutError, RuntimeError, ValueError, OSError) as exc:
             logger.warning(f"Failed to summarize chat history ({type(exc).__name__}): {exc}")
             return history_text[-2000:]
 
@@ -74,12 +88,16 @@ class LlmOrchestrator:
             return ""
         chunk_texts = "\n\n".join(str(c.get("text", "")) for c in document_chunks)
         prompt = (
-            f"User Query: '{query}'\n\nRetrieved Specification Chunks:\n{chunk_texts}\n\n"
-            "Synthesize a highly descriptive, comprehensive, and compressed contextual summary."
+            f"Query: {query}\n\nTechnical Document Chunks:\n{chunk_texts}\n\n"
+            "Synthesize a focused, factual summary of the specifications relevant to the query."
         )
+        kwargs = _safe_kwargs(self._local.generate_text, max_tokens=300, use_grammar=False)
         try:
-            return await self._local.generate_text(prompt, system_prompt="You are a technical context synthesizer.")
-        except (RuntimeError, ValueError, OSError) as exc:
+            return await asyncio.wait_for(
+                self._local.generate_text(prompt, system_prompt="You are a technical context synthesizer.", **kwargs),
+                timeout=25.0,
+            )
+        except (asyncio.TimeoutError, RuntimeError, ValueError, OSError) as exc:
             logger.warning(f"Failed to synthesize document context ({type(exc).__name__}): {exc}")
             return chunk_texts[:2000]
 
@@ -88,13 +106,21 @@ class LlmOrchestrator:
         tier = "local_2b" if self._distributed else "local_7b"
         prompt = f"User Query: {query}"
         if pdf_text.strip():
-            prompt += f"\n\nDocument Context:\n{pdf_text[:3000]}"
+            prompt += f"\n\nDocument Context:\n{pdf_text[:2000]}"
         prompt += "\n\nProvide a rapid, precise answer on Indian Standards compliance and requirements."
+        kwargs = _safe_kwargs(self._local.generate_text, max_tokens=256, use_grammar=False)
         try:
-            raw = await self._local.generate_text(prompt, system_prompt="You are a fast Indian Standards assistant.")
+            raw = await asyncio.wait_for(
+                self._local.generate_text(
+                    prompt,
+                    system_prompt="You are a fast Indian Standards assistant. Answer concisely.",
+                    **kwargs,
+                ),
+                timeout=15.0,
+            )
             if raw and len(raw.strip()) > 5:
                 return PipelineAnswerResponse(query=query, answer=raw.strip(), source_tier=tier)
-        except (RuntimeError, ValueError, OSError) as exc:
+        except (asyncio.TimeoutError, RuntimeError, ValueError, OSError) as exc:
             logger.warning(f"Fast Answer local inference failed ({type(exc).__name__}): {exc}")
         return PipelineAnswerResponse(
             query=query, answer="No local LLM available for fast answer generation.", source_tier="unavailable", confidence_score=0.0
@@ -136,7 +162,7 @@ class LlmOrchestrator:
             raw = await self._local.generate_text(mac_prompt)
             if raw and len(raw.strip()) > 10:
                 return PipelineAnswerResponse(
-                    query=query, answer=raw.strip(), source_tier="local_7b_fallback" if self._distributed else "local_7b",
+                    query=query, answer=raw.strip(), source_tier="local_2b_fallback" if self._distributed else "local_7b",
                     synthesized_context=synthesized_context, summarized_history=history_summary,
                 )
         except (RuntimeError, ValueError, OSError) as exc:

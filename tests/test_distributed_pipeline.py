@@ -82,4 +82,4 @@ async def test_heavy_reasoning_fallback_when_mac_fails() -> None:
     )
     assert isinstance(res, PipelineAnswerResponse)
     assert "Fast 2B response" in res.answer
-    assert res.source_tier == "local_7b_fallback"
+    assert res.source_tier == "local_2b_fallback"

@@ -12,10 +12,10 @@ from backend.engine.llm_interface import BaseLlmProvider
 class UnavailableLlmProvider(BaseLlmProvider):
     """Truthful provider indicating that no AI/LLM model is currently active."""
 
-    async def generate_text(self, prompt: str, system_prompt: str | None = None) -> str:
+    async def generate_text(self, prompt: str, system_prompt: str | None = None, **kwargs: Any) -> str:
         return "No LLM model is currently available. Please configure Cloud API credentials (OPENROUTER_API_KEY/GEMINI_API_KEY) or start a local AI runtime."
 
-    async def generate_text_stream(self, prompt: str, system_prompt: str | None = None) -> AsyncGenerator[str, None]:
+    async def generate_text_stream(self, prompt: str, system_prompt: str | None = None, **kwargs: Any) -> AsyncGenerator[str, None]:
         msg = await self.generate_text(prompt, system_prompt)
         for i in range(0, len(msg), 5):
             yield msg[i:i+5]
@@ -182,7 +182,7 @@ class RemoteMacLlmProvider(BaseLlmProvider):
         self._endpoint = endpoint or app_settings.distributed_reasoning.mac_endpoint
         self._fallback = DeterministicFallbackProvider()
 
-    async def generate_text(self, prompt: str, system_prompt: str | None = None) -> str:
+    async def generate_text(self, prompt: str, system_prompt: str | None = None, **kwargs: Any) -> str:
         payload = {"prompt": prompt, "system_prompt": system_prompt or ""}
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
@@ -199,7 +199,7 @@ class RemoteMacLlmProvider(BaseLlmProvider):
             pass
         return await self._fallback.generate_text(prompt, system_prompt)
 
-    async def generate_text_stream(self, prompt: str, system_prompt: str | None = None) -> AsyncGenerator[str, None]:
+    async def generate_text_stream(self, prompt: str, system_prompt: str | None = None, **kwargs: Any) -> AsyncGenerator[str, None]:
         payload = {"prompt": prompt, "system_prompt": system_prompt or "", "stream": True}
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:

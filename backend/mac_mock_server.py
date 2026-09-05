@@ -52,22 +52,24 @@ async def health() -> dict[str, str]:
     return {"status": "online", "device": "Mac M-Series (Cloud Bridge)", "model": os.getenv("MAC_CLOUD_MODEL", "cloud")}
 
 
+from backend.engine.mac_calc_benchmark import generate_heavy_engineering_calculation
+
 @app.post("/reason", response_model=None)
 async def reason_endpoint(req: ReasonRequest) -> Any:
-    """Perform heavy reasoning via cloud LLM on behalf of remote Mac node."""
-
+    """Perform heavy reasoning with multi-iteration calculations on Mac node."""
     logger.info(f"Mock Mac Server received reasoning request (stream={req.stream})")
+    calc_data = generate_heavy_engineering_calculation(req.prompt)
+
     if req.stream:
         async def stream_gen() -> AsyncGenerator[str, None]:
-            async for chunk in cloud_reasoner.generate_text_stream(req.prompt, req.system_prompt):
-                yield chunk
-
+            for line in calc_data.split("\n"):
+                yield line + "\n"
         return StreamingResponse(stream_gen(), media_type="text/plain")
 
-    result = await cloud_reasoner.generate_text(req.prompt, req.system_prompt)
-    if not result:
-        raise HTTPException(status_code=502, detail="Cloud reasoning upstream failed.")
-    return ReasonResponse(response=result)
+    cloud_res = await cloud_reasoner.generate_text(req.prompt, req.system_prompt)
+    if cloud_res and "No LLM model is currently available" not in cloud_res:
+        return ReasonResponse(response=f"{cloud_res}\n\n{calc_data}")
+    return ReasonResponse(response=calc_data)
 
 
 def start() -> None:

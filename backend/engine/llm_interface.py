@@ -9,14 +9,14 @@ class BaseLlmProvider(ABC):
 
     @abstractmethod
     async def generate_text(
-        self, prompt: str, system_prompt: str | None = None
+        self, prompt: str, system_prompt: str | None = None, **kwargs: Any
     ) -> str:
         """Generate textual completion for given prompt and system instructions."""
         raise NotImplementedError("Subclasses must implement generate_text")
 
     @abstractmethod
     async def generate_text_stream(
-        self, prompt: str, system_prompt: str | None = None
+        self, prompt: str, system_prompt: str | None = None, **kwargs: Any
     ) -> AsyncGenerator[str, None]:
         """Generate streaming textual completion for given prompt and system instructions."""
         raise NotImplementedError("Subclasses must implement generate_text_stream")

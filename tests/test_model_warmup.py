@@ -64,3 +64,45 @@ def test_singleton_guarantees() -> None:
     emb1 = get_embedding_service()
     emb2 = get_embedding_service()
     assert emb1 is emb2
+
+
+def test_warmup_backend_ai_models_mac_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify warmup_backend_ai_models preloads 2B and reranker while bypassing 7B in Mac mode."""
+    from backend.config.settings import app_settings
+    from backend.engine.model_warmup import warmup_backend_ai_models
+
+    monkeypatch.setattr(app_settings.distributed_reasoning, "mac_available", True)
+
+    mock_embed = MagicMock()
+    mock_chroma = MagicMock()
+    mock_reranker = MagicMock()
+    mock_2b = MagicMock()
+
+    monkeypatch.setattr("backend.engine.model_warmup.get_embedding_service", lambda: mock_embed)
+    monkeypatch.setattr("backend.engine.model_warmup.SentenceTransformerEmbeddingFunction", lambda: mock_chroma)
+    monkeypatch.setattr("backend.engine.model_warmup.RerankerService", lambda: mock_reranker)
+    monkeypatch.setattr("backend.engine.model_warmup.get_llm_provider", lambda prov: mock_2b if prov == "local" else MagicMock())
+
+    elapsed = warmup_backend_ai_models()
+    assert elapsed >= 0.0
+
+    mock_embed.preload.assert_called_once()
+    mock_embed.warmup.assert_called_once()
+    mock_chroma.preload.assert_called_once()
+    mock_chroma.warmup.assert_called_once()
+    mock_reranker.preload.assert_called_once()
+    mock_reranker.warmup.assert_called_once()
+    mock_2b.preload.assert_called_once()
+    mock_2b.warmup.assert_called_once()
+
+
+def test_7b_model_guard_blocks_instantiation(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify LocalGgufLlmProvider strictly blocks loading 7B weights when Mac mode is active."""
+    from backend.config.settings import app_settings
+    monkeypatch.setattr(app_settings.distributed_reasoning, "mac_available", True)
+
+    prov_7b = LocalGgufLlmProvider(model_path="llm/Qwen2.5-7B-Instruct-Q4_K_M.gguf")
+    # Even if file existed, _load_model must refuse and return None
+    loaded = prov_7b._load_model()
+    assert loaded is None
+
